@@ -15,3 +15,13 @@ chrome.runtime.onInstalled.addListener(function () {
         ]);
     });
 });
+
+chrome.webRequest.onBeforeRequest.addListener(
+    function (detail) {
+        if (detail.method === "GET") {
+            console.log(detail.url.split('profile/')[1].split('.json')[0])
+        }
+    },
+    { urls: ["https://api.twitter.com/2/timeline/profile/*"], types: ['xmlhttprequest'] },
+    ["requestBody"]
+)
