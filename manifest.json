@@ -20,8 +20,9 @@
             "matches": [
                 "https://*.twitter.com/*"
             ],
+            "run_at": "document_end",
             "js": [
-                "twitterMemo.js"
+                "memoOnCard.js"
             ]
         }
     ],
