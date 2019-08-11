@@ -30,5 +30,6 @@
             "32": "images/icon24.png"
         },
         "default_title": "Twitter Memo"
-    }
+    },
+    "options_page": "options.html"
 }
