@@ -24,6 +24,15 @@
             "js": [
                 "src/memoOnCard.js"
             ]
+        },
+        {
+            "matches": [
+                "https://*.twitter.com/*"
+            ],
+            "run_at": "document_end",
+            "js": [
+                "src/memoOnProfile.js"
+            ]
         }
     ],
     "page_action": {
