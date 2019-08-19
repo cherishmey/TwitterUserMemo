@@ -9,6 +9,8 @@ function updateScreenName(evt) {
         if (document.querySelector(selectorString) !== null && 
             currentScreenName !== document.querySelector(selectorString).getAttribute("href").slice(1)) {
             console.log("mouse in", currentScreenName = document.querySelector(selectorString).getAttribute("href").slice(1))
+            var textArea = document.createElement("textarea");
+            document.querySelector(selectorString).insertAdjacentElement("afterEnd",textArea);
         } else if (document.querySelector(selectorString) === null && currentScreenName !== null) {
             currentScreenName = null;
             console.log("mouse out")
