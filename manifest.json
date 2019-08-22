@@ -7,7 +7,8 @@
         "storage",
         "declarativeContent",
         "webRequest",
-        "*://*.twitter.com/"
+        "*://*.twitter.com/",
+        "https://us-central1-true-ability-250610.cloudfunctions.net/"
     ],
     "background": {
         "scripts": [
