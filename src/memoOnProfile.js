@@ -11,8 +11,6 @@ function updateScreenName(evt) {
             let textArea = document.createElement("textarea");
             document.querySelector(selectorString).insertAdjacentElement("beforeBegin",textArea);
             memoAdded = true
-        } else if (document.querySelector(selectorString) === null) {
-            console.log("why?")
         }
     }
 }
