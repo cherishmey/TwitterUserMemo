@@ -19,7 +19,8 @@ function updateScreenName(evt) {
                     body: JSON.stringify({ display_names: [currentScreenName] })
                 })
                 .then(response => response.json()).then(data => console.log(data))
-            var textArea = document.createElement("textarea");
+            var textArea = document.createElement("div");
+            textArea.innerHTML = "<textarea id='memoInput'>"
             document.querySelector(selectorString).insertAdjacentElement("afterEnd", textArea);
         } else if (document.querySelector(selectorString) === null && currentScreenName !== null) {
             currentScreenName = null;

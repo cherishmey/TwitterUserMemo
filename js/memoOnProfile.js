@@ -8,7 +8,8 @@ function updateScreenName(evt) {
     function showTextareaOnProfile() {
         if (document.querySelector(selectorString) !== null && !memoAdded) {
             console.log("Hello")
-            let textArea = document.createElement("textarea");
+            var textArea = document.createElement("div");
+            textArea.innerHTML = "<textarea id='memoInput'>"
             document.querySelector(selectorString).insertAdjacentElement("beforeBegin",textArea);
             memoAdded = true
         }
