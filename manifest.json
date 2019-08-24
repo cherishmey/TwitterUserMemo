@@ -12,7 +12,7 @@
     ],
     "background": {
         "scripts": [
-            "src/background.js"
+            "js/background.js"
         ],
         "persistent": true
     },
@@ -23,7 +23,7 @@
             ],
             "run_at": "document_end",
             "js": [
-                "src/memoOnCard.js"
+                "js/memoOnCard.js"
             ]
         },
         {
@@ -32,7 +32,7 @@
             ],
             "run_at": "document_end",
             "js": [
-                "src/memoOnProfile.js"
+                "js/memoOnProfile.js"
             ]
         }
     ],
