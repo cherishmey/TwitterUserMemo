@@ -24,7 +24,23 @@ function updateScreenName(evt) {
                         'x-csrf-token': document.cookie.split("ct0=")[1].split(";")[0],
                     },
                 })
-                .then(response => response.json()).then(data => console.log(data))
+                .then(response => response.json())
+                .then(data => {
+                    key = data.id_str
+                    chrome.storage.sync.get([key], // one key at a time
+                        function (result) {
+                            if (result[key] !== undefined) {
+                                var tag = result[key].tag
+                                var memo = result[key].memo
+                            } else {
+                                tag = ""
+                                memo = ""
+                            }
+                            console.log(key + ": { memo: " + memo + ", tag: " + tag + "}");
+                        }
+                    )
+                }
+                );
             var textArea = document.createElement("div");
             textArea.innerHTML = "<textarea id='memoInput'>"
             document.querySelector(selectorString).insertAdjacentElement("afterEnd", textArea);
