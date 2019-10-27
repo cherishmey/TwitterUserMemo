@@ -22,21 +22,50 @@ function createMemoOnProfile(evt) {
             textArea.setAttribute("id", "memoDiv")
             textArea.innerHTML = "<textarea id='memoInput'>"
             document.querySelector(selectorString).insertAdjacentElement("beforeBegin", textArea); // then create one
-            loadData(getUserIDInProfilePage()) // and fill data
+            loadData("DummyID") // and fill data
+            getScreenNameOnProfile()
+
             document.getElementById("memoInput").addEventListener("focusout", function () {
                 let note = {}
-                let userID = getUserIDInProfilePage();
-                let value = document.getElementById("memoInput").value;
-                note[userID] = { "memo": value };
-                console.log(note)
-                saveData(note)
+                let screenName = getScreenNameOnProfile()
+                console.log("page of ", screenName);
+                getUserIDInProfilePage(screenName).then(userID => {
+                    let value = document.getElementById("memoInput").value;
+                    note[userID] = { "memo": value };
+                    console.log(note)
+                    saveData(note)
+                });
             });
         }
     }
 }
 
-function getUserIDInProfilePage() {
-    return "DummyID"
+function getScreenNameOnProfile(){
+    let screenNameSelectorString = "div.css-901oao.css-bfa6kz.r-1re7ezh.r-18u37iz.r-1qd0xha.r-1b43r93.r-16dba41.r-ad9z0x.r-bcqeeo.r-qvutc0"
+    let spanClassName = "css-901oao css-16my406 r-1qd0xha r-ad9z0x r-bcqeeo r-qvutc0"
+    if (document.querySelector(screenNameSelectorString) !== null){
+        return document.querySelector(screenNameSelectorString).getElementsByClassName(spanClassName)[0].innerHTML.toString();
+    }
+}
+
+function getUserIDInProfilePage(currentScreenName) {
+    const bearerToken = "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA";
+    fd = new URLSearchParams()
+    fd.append("input", currentScreenName)
+    return fetch(`https://api.twitter.com/1.1/users/show.json?screen_name=${currentScreenName}`,
+        {
+            method: "GET",
+            headers: {
+                'Accept': "*/*",
+                'Authorization': `Bearer ${bearerToken}`,
+                'Accept-Encoding': 'gzip, deflate',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'x-csrf-token': document.cookie.split("ct0=")[1].split(";")[0],
+            },
+        })
+        .then(response => response.json())
+        .then(json => json.id_str);
 }
 
 function saveData(items) {
