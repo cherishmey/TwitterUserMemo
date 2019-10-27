@@ -2,6 +2,7 @@ window.addEventListener("load", createMemoOnProfile, false);
 
 function createMemoOnProfile(evt) {
     let currentURL = window.location.href;
+
     let selectorString = "div.css-1dbjc4n.r-obd0qt.r-18u37iz.r-1w6e6rj.r-1h0z5md.r-dnmrzs"
 
     setInterval(updateCurrentURL, 100);
@@ -18,6 +19,7 @@ function createMemoOnProfile(evt) {
     function createTextArea() { // Update memo on the creation of memoInput
         if (document.getElementById("memoInput") === null && document.querySelector(selectorString) !== null) { // profile page but no memoInput
             let textArea = document.createElement("div");
+            textArea.setAttribute("id", "memoDiv")
             textArea.innerHTML = "<textarea id='memoInput'>"
             document.querySelector(selectorString).insertAdjacentElement("beforeBegin", textArea); // then create one
             loadData(getUserIDInProfilePage()) // and fill data
