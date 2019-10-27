@@ -18,6 +18,7 @@
     },
     "content_scripts": [
         {
+            "css": ["css/main.css"],
             "matches": [
                 "https://*.twitter.com/*"
             ],
