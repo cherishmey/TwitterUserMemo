@@ -22,8 +22,7 @@ function createMemoOnProfile(evt) {
             textArea.setAttribute("id", "memoDiv")
             textArea.innerHTML = "<textarea id='memoInput'>"
             document.querySelector(selectorString).insertAdjacentElement("beforeBegin", textArea); // then create one
-            loadData("DummyID") // and fill data
-            getScreenNameOnProfile()
+            loadData("DummyID") //TODO: 이미 저장된 아이디가 있으면 불러오기
 
             document.getElementById("memoInput").addEventListener("focusout", function () {
                 let note = {}
