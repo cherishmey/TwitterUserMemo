@@ -24,6 +24,7 @@ function createMemoOnProfile(evt) {
             document.querySelector(selectorString).insertAdjacentElement("beforeBegin", textArea); // then create one
             let screenName = getScreenNameOnProfile()
             getUserIDInProfilePage(screenName).then(userId => {
+                console.log("userId: "+userId)
                 loadData(userId) // and fill data
             });
 
@@ -67,7 +68,8 @@ function getUserIDInProfilePage(currentScreenName) {
             },
         })
         .then(response => response.json())
-        .then(json => json.id_str);
+        .then(json => json.id_str)
+        .catch(err => console.log(`[${document.domain}] error : `+err));
 }
 
 function saveData(items) {
