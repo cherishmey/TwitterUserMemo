@@ -52,24 +52,15 @@ function getScreenNameOnProfile(){
 }
 
 function getUserIDInProfilePage(currentScreenName) {
-    const bearerToken = "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA";
-    fd = new URLSearchParams()
-    fd.append("input", currentScreenName)
-    return fetch(`https://api.twitter.com/1.1/users/show.json?screen_name=${currentScreenName}`,
-        {
-            method: "GET",
-            headers: {
-                'Accept': "*/*",
-                'Authorization': `Bearer ${bearerToken}`,
-                'Accept-Encoding': 'gzip, deflate',
-                'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive',
-                'x-csrf-token': document.cookie.split("ct0=")[1].split(";")[0],
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            {
+                contentScriptQuery: "getUserId",
+                screenName: currentScreenName,
+                csrfToken: document.cookie.split("ct0=")[1].split(";")[0]
             },
-        })
-        .then(response => response.json())
-        .then(json => json.id_str)
-        .catch(err => console.log(`[${document.domain}] error : `+err));
+            id_str => resolve(id_str))
+    });
 }
 
 function saveData(items) {
