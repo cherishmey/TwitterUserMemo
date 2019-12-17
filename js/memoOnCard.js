@@ -43,7 +43,7 @@ function updateScreenName(evt) {
                 );
             var textArea = document.createElement("div");
             textArea.setAttribute("id", "memoDiv")
-            textArea.innerHTML = "<textarea id='memoInput'>"
+            textArea.innerHTML = "<textarea id='memoCardInput'>"
             document.querySelector(selectorString).insertAdjacentElement("afterEnd", textArea);
         } else if (document.querySelector(selectorString) === null && currentScreenName !== null) {
             currentScreenName = null;

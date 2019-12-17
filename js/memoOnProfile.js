@@ -9,7 +9,7 @@ function createMemoOnProfile(evt) {
     function updateCurrentURL() { // Update memo on URL change. This is for profile -> profile
         if (currentURL !== window.location.href) {
             currentURL = window.location.href;
-            if (document.getElementById("memoInput") !== null && document.querySelector(selectorString) !== null) { // has memoInput
+            if (document.getElementById("memoProfileInput") !== null && document.querySelector(selectorString) !== null) { // has memoInput
                 loadData(getUserIDInProfilePage());
             }
         }
@@ -17,10 +17,10 @@ function createMemoOnProfile(evt) {
 
     setInterval(createTextArea, 100);
     function createTextArea() { // Update memo on the creation of memoInput
-        if (document.getElementById("memoInput") === null && document.querySelector(selectorString) !== null) { // profile page but no memoInput
+        if (document.getElementById("memoProfileInput") === null && document.querySelector(selectorString) !== null) { // profile page but no memoInput
             let textArea = document.createElement("div");
-            textArea.setAttribute("id", "memoDiv")
-            textArea.innerHTML = "<textarea id='memoInput'>"
+            textArea.setAttribute("id", "memoDiv");
+            textArea.innerHTML = "<textarea id='memoProfileInput'>";
             document.querySelector(selectorString).insertAdjacentElement("beforeBegin", textArea); // then create one
             let screenName = getScreenNameOnProfile()
             if (screenName === null) {
@@ -31,12 +31,12 @@ function createMemoOnProfile(evt) {
                     loadData(userId) // and fill data
                 });
 
-                document.getElementById("memoInput").addEventListener("focusout", function () {
+                document.getElementById("memoProfileInput").addEventListener("focusout", function () {
                     let note = {}
 
                     //console.log("page of ", screenName);
                     getUserIDInProfilePage(screenName).then(userID => {
-                        let value = document.getElementById("memoInput").value;
+                        let value = document.getElementById("memoProfileInput").value;
                         note[userID] = { "memo": value };
                         console.log(note)
                         saveData(note)
@@ -93,7 +93,7 @@ function loadData(key) {
         catch (TypeError) {
             tag = ''
         }
-        document.getElementById("memoInput").value = memo
+        document.getElementById("memoProfileInput").value = memo
         console.log(`${key}: { memo: ${memo}, tag: ${tag}}`);
     });
 }
