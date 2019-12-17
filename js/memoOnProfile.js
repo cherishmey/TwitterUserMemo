@@ -3,7 +3,7 @@ window.addEventListener("load", createMemoOnProfile, false);
 function createMemoOnProfile(evt) {
     let currentURL = window.location.href;
 
-    let selectorString = "div.css-1dbjc4n.r-obd0qt.r-18u37iz.r-1w6e6rj.r-1h0z5md.r-dnmrzs"
+    let selectorString = "div.css-1dbjc4n.r-ku1wi2.r-1j3t67a.r-m611by"
 
     setInterval(updateCurrentURL, 100);
     function updateCurrentURL() { // Update memo on URL change. This is for profile -> profile
