@@ -23,31 +23,39 @@ function createMemoOnProfile(evt) {
             textArea.innerHTML = "<textarea id='memoInput'>"
             document.querySelector(selectorString).insertAdjacentElement("beforeBegin", textArea); // then create one
             let screenName = getScreenNameOnProfile()
-            getUserIDInProfilePage(screenName).then(userId => {
-                console.log("userId: "+userId)
-                loadData(userId) // and fill data
-            });
-
-            document.getElementById("memoInput").addEventListener("focusout", function () {
-                let note = {}
-                
-                //console.log("page of ", screenName);
-                getUserIDInProfilePage(screenName).then(userID => {
-                    let value = document.getElementById("memoInput").value;
-                    note[userID] = { "memo": value };
-                    console.log(note)
-                    saveData(note)
+            if (screenName === null) {
+                console.log("Selector string has changed. Please contact developers.")
+            } else {
+                getUserIDInProfilePage(screenName).then(userId => {
+                    console.log("userId: " + userId)
+                    loadData(userId) // and fill data
                 });
-            });
+
+                document.getElementById("memoInput").addEventListener("focusout", function () {
+                    let note = {}
+
+                    //console.log("page of ", screenName);
+                    getUserIDInProfilePage(screenName).then(userID => {
+                        let value = document.getElementById("memoInput").value;
+                        note[userID] = { "memo": value };
+                        console.log(note)
+                        saveData(note)
+                    });
+                });
+            }
         }
     }
 }
 
-function getScreenNameOnProfile(){
-    let screenNameSelectorString = "div.css-901oao.css-bfa6kz.r-111h2gw.r-18u37iz.r-1qd0xha.r-a023e6.r-16dba41.r-ad9z0x.r-bcqeeo.r-qvutc0"
+function getScreenNameOnProfile() {
+    let screenNameSelectorString = ["div.css-901oao.css-bfa6kz.r-111h2gw.r-18u37iz.r-1qd0xha.r-a023e6.r-16dba41.r-ad9z0x.r-bcqeeo.r-qvutc0",  // dark theme
+        "div.css-901oao.css-bfa6kz.r-1re7ezh.r-18u37iz.r-1qd0xha.r-a023e6.r-16dba41.r-ad9z0x.r-bcqeeo.r-qvutc0",  // light theme
+        "div.css-901oao.css-bfa6kz.r-9ilb82.r-18u37iz.r-1qd0xha.r-a023e6.r-16dba41.r-ad9z0x.r-bcqeeo.r-qvutc0"]  // black theme
     let spanClassName = "css-901oao css-16my406 r-1qd0xha r-ad9z0x r-bcqeeo r-qvutc0"
-    if (document.querySelector(screenNameSelectorString) !== null){
+    if (document.querySelector(screenNameSelectorString) !== null) {
         return document.querySelector(screenNameSelectorString).getElementsByClassName(spanClassName)[0].innerHTML.toString();
+    } else {
+        return null;
     }
 }
 
