@@ -10,7 +10,7 @@ function createMemoOnProfile(evt) {
         if (currentURL !== window.location.href) {
             currentURL = window.location.href;
             if (document.getElementById("memoProfileInput") !== null && document.querySelector(selectorString) !== null) { // has memoInput
-                loadData(getUserIDInProfilePage());
+                loadProfileData(getUserIDInProfilePage());
             }
         }
     }
@@ -28,7 +28,7 @@ function createMemoOnProfile(evt) {
             } else {
                 getUserIDInProfilePage(screenName).then(userId => {
                     console.log("userId: " + userId)
-                    loadData(userId) // and fill data
+                    loadProfileData(userId) // and fill data
                 });
 
                 document.getElementById("memoProfileInput").addEventListener("focusout", function () {
@@ -39,7 +39,7 @@ function createMemoOnProfile(evt) {
                         let value = document.getElementById("memoProfileInput").value;
                         note[userID] = { "memo": value };
                         console.log(note)
-                        saveData(note)
+                        saveProfileData(note)
                     });
                 });
             }
@@ -71,13 +71,12 @@ function getUserIDInProfilePage(currentScreenName) {
     });
 }
 
-function saveData(items) {
+function saveProfileData(items) {
     chrome.storage.sync.set(items, function (items) {
-        console.log(items);
     });
 }
 
-function loadData(key) {
+function loadProfileData(key) {
     chrome.storage.sync.get([key], function (result) {
         let tag = '';
         let memo = '';
