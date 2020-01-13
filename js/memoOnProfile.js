@@ -21,7 +21,7 @@ function createMemoOnProfile(evt) {
             let textArea = document.createElement("div");
             textArea.setAttribute("id", "memoDiv");
             textArea.innerHTML = "<textarea id='memoProfileInput'>";
-            document.querySelector(selectorString).insertAdjacentElement("beforeBegin", textArea); // then create one
+            document.querySelector(selectorString).insertAdjacentElement("afterEnd", textArea); // then create one
             let screenName = getScreenNameOnProfile()
             if (screenName === null) {
                 console.log("Selector string has changed. Please contact developers.")
