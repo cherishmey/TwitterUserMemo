@@ -5,6 +5,9 @@
     border-radius: 1em;
     resize: none;
     overflow: hidden;
+    position: absolute;
+    top: 210px;
+    left: 155px;
 }
 
 #memoCardInput {
@@ -19,8 +22,7 @@
 }
 
 #memoDiv {
-    float: left;
-    -webkit-box-flex: 3;
+    height: 46px;
 }
 
 textarea:focus {
