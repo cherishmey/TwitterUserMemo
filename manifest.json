@@ -7,7 +7,7 @@
         "storage",
         "declarativeContent",
         "webRequest",
-        "*://*.twitter.com/",
+        "*://*.twitter.com/"
     ],
     "background": {
         "scripts": [
@@ -23,15 +23,7 @@
             ],
             "run_at": "document_end",
             "js": [
-                "js/memoOnCard.js"
-            ]
-        },
-        {
-            "matches": [
-                "https://*.twitter.com/*"
-            ],
-            "run_at": "document_end",
-            "js": [
+                "js/memoOnCard.js",
                 "js/memoOnProfile.js"
             ]
         }
