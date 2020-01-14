@@ -36,10 +36,12 @@ function createMemoOnProfile(evt) {
 
                     //console.log("page of ", screenName);
                     getUserIDInProfilePage(screenName).then(userID => {
-                        let value = document.getElementById("memoProfileInput").value;
-                        note[userID] = { "memo": value };
-                        console.log(note)
-                        saveProfileData(note)
+                        if (document.getElementById("memoProfileInput")) {
+                            let value = document.getElementById("memoProfileInput").value;
+                            note[userID] = { "memo": value };
+                            console.log(note)
+                            saveProfileData(note)
+                        }
                     });
                 });
             }

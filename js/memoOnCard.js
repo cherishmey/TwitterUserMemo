@@ -24,10 +24,12 @@ function createMemoOnCard(evt) {
                     let note = {}
 
                     getUserIDInCard(screenName).then(userID => {
-                        let value = document.getElementById("memoCardInput").value;
-                        note[userID] = { "memo": value };
-                        console.log(note)
-                        saveCardData(note)
+                        if (document.getElementById("memoCardInput")) {
+                            let value = document.getElementById("memoCardInput").value;
+                            note[userID] = { "memo": value };
+                            console.log(note)
+                            saveCardData(note)
+                        }
                     });
                 });
             }
