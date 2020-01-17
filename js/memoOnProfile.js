@@ -31,7 +31,7 @@ function createMemoOnProfile(evt) {
                     loadProfileData(userId) // and fill data
                 });
 
-                document.getElementById("memoProfileInput").addEventListener("focusout", function () {
+                document.getElementById("memoProfileInput").addEventListener("input", function () {
                     let note = {}
 
                     //console.log("page of ", screenName);
@@ -39,7 +39,6 @@ function createMemoOnProfile(evt) {
                         if (document.getElementById("memoProfileInput")) {
                             let value = document.getElementById("memoProfileInput").value;
                             note[userID] = { "memo": value };
-                            console.log(note)
                             saveProfileData(note)
                         }
                     });

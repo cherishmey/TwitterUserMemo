@@ -20,14 +20,12 @@ function createMemoOnCard(evt) {
                 });
 
                 // and add an event listener
-                document.getElementById("memoCardInput").addEventListener("focusout", function () {
+                document.getElementById("memoCardInput").addEventListener("input", function () {
                     let note = {}
-
                     getUserIDInCard(screenName).then(userID => {
                         if (document.getElementById("memoCardInput")) {
                             let value = document.getElementById("memoCardInput").value;
                             note[userID] = { "memo": value };
-                            console.log(note)
                             saveCardData(note)
                         }
                     });
