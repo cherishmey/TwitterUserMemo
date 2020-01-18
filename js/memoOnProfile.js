@@ -10,7 +10,8 @@ function createMemoOnProfile(evt) {
         if (currentURL !== window.location.href) {
             currentURL = window.location.href;
             if (document.getElementById("memoProfileInput") !== null && document.querySelector(selectorString) !== null) { // has memoInput
-                loadProfileData(getUserIDInProfilePage());
+                getUserIDInProfilePage(getScreenNameOnProfile()).then(
+                    (userID) => loadProfileData(userID));
             }
         }
     }
