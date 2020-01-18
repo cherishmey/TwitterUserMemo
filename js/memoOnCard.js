@@ -1,11 +1,13 @@
 window.addEventListener("load", createMemoOnCard, false);
 
 function createMemoOnCard(evt) {
+    console.log("이벤트 시작")
     let selectorString = "div.css-1dbjc4n.r-1r5jyh0.r-1ipicw7 div.css-1dbjc4n.r-1oqcu8e div.css-1dbjc4n.r-18u37iz.r-1wtj0ep a[href]"
 
     setInterval(createTextArea, 100);
     function createTextArea() {
         if (document.getElementById("memoCardInput") === null && document.querySelector(selectorString) !== null) { // card appeared but no memoInput
+            console.log("카드 발견, 메모칸 생성")
             let textArea = document.createElement("div");
             textArea.setAttribute("id", "memoDiv")
             textArea.innerHTML = "<textarea id='memoCardInput'>"
@@ -37,8 +39,10 @@ function createMemoOnCard(evt) {
 function getScreenNameOnCard() {
     let selectorString = "div.css-1dbjc4n.r-1r5jyh0.r-1ipicw7 div.css-1dbjc4n.r-1oqcu8e div.css-1dbjc4n.r-18u37iz.r-1wtj0ep a[href]"
     if (document.querySelector(selectorString) !== null) {
+        console.log("스크린네임 찾음: "+ document.querySelector(selectorString).getAttribute("href").slice(1))
         return document.querySelector(selectorString).getAttribute("href").slice(1);
     } else {
+        console.log("스크린네임 못찾음")
         return null;
     }
 }
@@ -77,6 +81,6 @@ function loadCardData(key) {
             tag = ''
         }
         document.getElementById("memoCardInput").value = memo
-        console.log(`${key}: { memo: ${memo}, tag: ${tag}}`);
+        console.log(`메모 찾음: ${key}: { memo: ${memo}, tag: ${tag}}`);
     });
 }
