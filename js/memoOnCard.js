@@ -2,16 +2,17 @@ window.addEventListener("load", createMemoOnCard, false);
 
 function createMemoOnCard(evt) {
     console.log("이벤트 시작")
-    let selectorString = "div.css-1dbjc4n.r-1r5jyh0.r-1ipicw7 div.css-1dbjc4n.r-1oqcu8e div.css-1dbjc4n.r-18u37iz.r-1wtj0ep a[href]"
+    let selectorStrings = ["div.css-1dbjc4n.r-1r5jyh0.r-1ipicw7 div.css-1dbjc4n.r-1oqcu8e div.css-1dbjc4n.r-18u37iz.r-1wtj0ep a[href]",
+                           "div.css-1dbjc4n.r-1r5jyh0.r-1ipicw7 div.css-1dbjc4n.r-nsbfu8 div.css-1dbjc4n.r-18u37iz.r-1wtj0ep a[href]"]
 
     setInterval(createTextArea, 100);
     function createTextArea() {
-        if (document.getElementById("memoCardInput") === null && document.querySelector(selectorString) !== null) { // card appeared but no memoInput
+        if (document.getElementById("memoCardInput") === null && document.querySelector(selectorStrings) !== null) { // card appeared but no memoInput
             console.log("카드 발견, 메모칸 생성")
             let textArea = document.createElement("div");
             textArea.setAttribute("id", "memoDiv")
             textArea.innerHTML = "<textarea id='memoCardInput'>"
-            document.querySelector(selectorString).insertAdjacentElement("afterEnd", textArea);
+            document.querySelector(selectorStrings).insertAdjacentElement("afterEnd", textArea);
             let screenName = getScreenNameOnCard()
             if (screenName === null) {
                 console.log("Selector string has changed. Please contact developers.")
