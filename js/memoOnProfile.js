@@ -23,12 +23,10 @@ function createMemoOnProfile(evt) {
             textArea.setAttribute("id", "memoDiv");
             textArea.innerHTML = "<textarea id='memoProfileInput'>";
             document.querySelector(selectorString).insertAdjacentElement("afterEnd", textArea); // then create one
-            let screenName = getScreenNameOnProfile()
-            if (screenName === null) {
+            if (getScreenNameOnProfile() === null) {
                 console.log("Selector string has changed. Please contact developers.")
             } else {
-                getUserIDInProfilePage(screenName).then(userId => {
-                    console.log("userId: " + userId)
+                getUserIDInProfilePage(getScreenNameOnProfile()).then(userId => {
                     loadProfileData(userId) // and fill data
                 });
 
@@ -36,7 +34,7 @@ function createMemoOnProfile(evt) {
                     let note = {}
 
                     //console.log("page of ", screenName);
-                    getUserIDInProfilePage(screenName).then(userID => {
+                    getUserIDInProfilePage(getScreenNameOnProfile()).then(userID => {
                         if (document.getElementById("memoProfileInput")) {
                             let value = document.getElementById("memoProfileInput").value;
                             note[userID] = { "memo": value };
