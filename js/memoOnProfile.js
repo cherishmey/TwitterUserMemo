@@ -93,6 +93,5 @@ function loadProfileData(key) {
             tag = ''
         }
         document.getElementById("memoProfileInput").value = memo
-        console.log(`${key}: { memo: ${memo}, tag: ${tag}}`);
     });
 }
