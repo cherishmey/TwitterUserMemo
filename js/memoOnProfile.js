@@ -48,12 +48,14 @@ function createMemoOnProfile(evt) {
 }
 
 function getScreenNameOnProfile() {
+    let profileAreaSelectorString = ["div.css-1dbjc4n.r-ku1wi2.r-1j3t67a.r-m611by"]
     let screenNameSelectorString = ["div.css-901oao.css-bfa6kz.r-111h2gw.r-18u37iz.r-1qd0xha.r-a023e6.r-16dba41.r-ad9z0x.r-bcqeeo.r-qvutc0",  // dark theme
         "div.css-901oao.css-bfa6kz.r-1re7ezh.r-18u37iz.r-1qd0xha.r-a023e6.r-16dba41.r-ad9z0x.r-bcqeeo.r-qvutc0",  // light theme
         "div.css-901oao.css-bfa6kz.r-9ilb82.r-18u37iz.r-1qd0xha.r-a023e6.r-16dba41.r-ad9z0x.r-bcqeeo.r-qvutc0"]  // black theme
     let spanClassName = "css-901oao css-16my406 r-1qd0xha r-ad9z0x r-bcqeeo r-qvutc0"
-    if (document.querySelector(screenNameSelectorString) !== null) {
-        return document.querySelector(screenNameSelectorString).getElementsByClassName(spanClassName)[0].innerHTML.toString();
+    profileArea = document.querySelector(profileAreaSelectorString)
+    if (profileArea.querySelector(screenNameSelectorString) !== null) {
+        return profileArea.querySelector(screenNameSelectorString).getElementsByClassName(spanClassName)[0].innerHTML.toString();
     } else {
         return null;
     }
