@@ -1,8 +1,8 @@
 {
-    "name": "Twitter User Memo",
+    "name": "__MSG_extName__",
     "version": "0.1",
     "description": "Twitter memo application",
-    "default_locale": "kr",
+    "default_locale": "ko",
     "manifest_version": 2,
     "permissions": [
         "storage",
