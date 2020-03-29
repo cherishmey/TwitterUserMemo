@@ -24,7 +24,7 @@ function createMemoOnProfile(evt) {
             textArea.innerHTML = "<textarea id='memoProfileInput'>";
             document.querySelector(selectorString).insertAdjacentElement("afterEnd", textArea); // then create one
             if (getScreenNameOnProfile() === null) {
-                console.log("Selector string has changed. Please contact developers.")
+                console.log("[TwitterUserMemo] Selector string has changed. Please contact developers.")
             } else {
                 getUserIDInProfilePage(getScreenNameOnProfile()).then(userId => {
                     loadProfileData(userId) // and fill data
@@ -32,8 +32,6 @@ function createMemoOnProfile(evt) {
 
                 document.getElementById("memoProfileInput").addEventListener("input", function () {
                     let note = {}
-
-                    //console.log("page of ", screenName);
                     getUserIDInProfilePage(getScreenNameOnProfile()).then(userID => {
                         if (document.getElementById("memoProfileInput")) {
                             let value = document.getElementById("memoProfileInput").value;

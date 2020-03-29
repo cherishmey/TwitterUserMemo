@@ -18,7 +18,7 @@ chrome.runtime.onMessage.addListener(
                 })
                 .then(response => response.json())
                 .then(json => sendResponse(json.id_str))
-                .catch(err => console.log(`[${document.domain}] error : ` + err));
+                .catch(err => console.log(`[TwitterUserMemo] [${document.domain}] error : ` + err));
             return true;
         }
     });
@@ -26,7 +26,7 @@ chrome.runtime.onMessage.addListener(
 chrome.webRequest.onBeforeRequest.addListener(
     function (detail) {
         if (detail.method === "GET") {
-            console.log(detail.url.split('profile/')[1].split('.json')[0])
+            console.log("[TwitterUserMemo] " + detail.url.split('profile/')[1].split('.json')[0])
         }
     },
     { urls: ["https://api.twitter.com/2/timeline/profile/*"], types: ['xmlhttprequest'] },

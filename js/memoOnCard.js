@@ -13,10 +13,9 @@ function createMemoOnCard(evt) {
             document.querySelector(selectorStrings).insertAdjacentElement("afterEnd", textArea);
             let screenName = getScreenNameOnCard()
             if (screenName === null) {
-                console.log("Selector string has changed. Please contact developers.")
+                console.log("[TwitterUserMemo] Selector string has changed. Please contact developers.")
             } else {
                 getUserIDInCard(screenName).then(userId => {
-                    console.log("userId: " + userId)
                     loadCardData(userId) // and fill data
                 });
 
