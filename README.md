@@ -1,113 +1,135 @@
-# TwitterUserMemo
+# Twitter User Memo
 
-TwitterUserMemo is a Chrome extension for saving private notes on any X (Twitter) account. It adds a lightweight memo field directly to profile pages and hover cards, then syncs those notes through Chrome without sending data to external servers.
+Leave private memos on any X (Twitter) profile. Your notes stay synced across devices via Chrome storage - no servers, no accounts, no external APIs.
 
 ## Features
 
-- Save private memos keyed by `@screen_name`
-- Show memos on both profile pages and hover cards
-- Auto-save while typing with a 300ms debounce
-- Support both `x.com` and `twitter.com`
-- Match X light and dark themes with a native-looking UI
-- Keep data in `chrome.storage.sync` for Chrome account sync
+- Add memos to any user profile page
+- Quick memo on hover cards (collapsed by default, expand with one click)
+- Memos sync across your Chrome instances via `chrome.storage.sync`
+- Light and dark theme support (auto-detects X theme)
+- Bilingual: English and Korean UI
+- Zero external API calls - all data stays local
+- Manifest V3 compliant
+
+## How It Works
+
+The extension injects a memo box into profile pages on `x.com` and `twitter.com`, plus a compact memo toggle inside user hover cards.
+
+All memos are stored in `chrome.storage.sync` using the user's screen name as the key:
+
+```json
+{
+  "@username": {
+    "memo": "Private note text",
+    "updatedAt": 1712345678901
+  }
+}
+```
+
+This means:
+
+- Notes are private to the browser profile that installed the extension
+- Notes can sync across Chrome instances signed into the same Chrome account
+- Notes are not sent to any external server by this extension
 
 ## Installation
 
-### Chrome Web Store
-
-1. Open the Chrome Web Store.
-2. Search for `TwitterUserMemo`.
-3. Install the extension once the listing is available for your account or region.
-
-### Developer Mode
-
 1. Download or clone this repository.
-2. Open `chrome://extensions` in Chrome.
-3. Turn on **Developer mode**.
+2. Open Chrome and go to `chrome://extensions`.
+3. Enable **Developer mode**.
 4. Click **Load unpacked**.
-5. Select the project folder.
-6. Pin the extension if you want quick access from the toolbar.
+5. Select this project folder.
 
 ## Usage
 
-### Profile Pages
+### Profile page memo
 
-1. Open any user profile on `x.com` or `twitter.com`.
-2. Find the memo block placed below the profile bio area.
-3. Type your note. It saves automatically after you stop typing for 300ms.
+Open any X profile page. A **Memo** field appears below the profile header. Type anything you want, and the note is saved automatically after a short debounce.
 
-### Hover Cards
+### Hover card memo
 
-1. Hover over a username or avatar so X opens the user hover card.
-2. Click the small **Memo** badge at the bottom of the card.
-3. Add or edit your note in the expanded textarea.
-4. The note saves automatically and will appear again the next time you view that user.
-
-## Screenshots
-
-<!-- TODO: add screenshots -->
+Hover over a user to open their profile card. Click the memo toggle to expand the note area, then type. The memo is saved automatically and reused anywhere that account appears.
 
 ## Privacy
 
-All memo data is stored in `chrome.storage.sync`, which stays inside Chrome's sync storage for your signed-in browser profile. The extension does not make network requests, use analytics, or send data to external servers.
+This extension does not use:
 
-## Tech Stack
+- Remote APIs
+- Analytics
+- Authentication
+- External databases
 
-- Vanilla JavaScript
-- Chrome Extension Manifest V3
-- `chrome.storage.sync`
+All memo data lives inside Chrome extension storage.
 
-## License
+## Theme Support
 
-MIT
+The UI adapts to X's current theme. The content script checks the page theme state and applies a scoped dark-mode class when needed.
 
----
+## Project Structure
 
-## 한국어
+```text
+manifest.json
+README.md
+css/
+  main.css
+js/
+  background.js
+  content.js
+_locales/
+  en/messages.json
+  ko/messages.json
+images/
+  icon16.png
+  icon48.png
+  icon128.png
+```
 
-TwitterUserMemo는 X(트위터) 사용자 계정마다 개인 메모를 남길 수 있는 크롬 확장 프로그램입니다. 프로필 페이지와 호버 카드에 메모 입력 UI를 직접 추가하며, 외부 서버 없이 Chrome 동기화 저장소에만 데이터를 보관합니다.
+## Technical Notes
 
-### 기능
+- Manifest V3 service worker is intentionally minimal
+- One content script handles profile pages, hover cards, theme sync, and SPA navigation
+- CSS is fully scoped with the `.x-memo-` prefix to avoid collisions with X styles
+- Navigation is handled by listening to `pushState`, `replaceState`, and `popstate`
 
-- `@screen_name` 기준으로 개인 메모 저장
-- 프로필 페이지와 호버 카드 모두에서 메모 표시
-- 입력 중 300ms 디바운스로 자동 저장
-- `x.com`, `twitter.com` 동시 지원
-- X의 라이트/다크 테마에 맞는 자연스러운 UI
-- `chrome.storage.sync` 기반 동기화
+## Limitations
 
-### 설치
+- The extension is designed for X profile surfaces and hover cards only
+- DOM selectors may require updates if X significantly changes its internal markup
+- `chrome.storage.sync` has Chrome quota limits, so extremely large memo usage is not a target case
 
-#### Chrome Web Store
+## Korean
 
-1. Chrome 웹 스토어를 엽니다.
-2. `TwitterUserMemo`를 검색합니다.
-3. 스토어 등록이 제공되는 경우 확장 프로그램을 설치합니다.
+`Twitter User Memo`는 X(트위터) 프로필마다 개인 메모를 남길 수 있는 크롬 확장 프로그램입니다. 메모는 외부 서버로 전송되지 않으며, `chrome.storage.sync`에 저장되어 같은 크롬 계정 환경에서 동기화될 수 있습니다.
 
-#### 개발자 모드
+### 주요 기능
 
-1. 이 저장소를 다운로드하거나 클론합니다.
-2. Chrome에서 `chrome://extensions`를 엽니다.
+- 프로필 페이지에 개인 메모 추가
+- 호버 카드에서 한 번의 클릭으로 빠른 메모 입력
+- X 라이트/다크 테마 자동 감지
+- 영어/한국어 로케일 지원
+- 외부 API 호출 없음
+- Manifest V3 기반
+
+### 설치 방법
+
+1. 이 저장소를 내려받습니다.
+2. 크롬에서 `chrome://extensions`로 이동합니다.
 3. **개발자 모드**를 켭니다.
 4. **압축해제된 확장 프로그램을 로드합니다**를 클릭합니다.
-5. 프로젝트 폴더를 선택합니다.
+5. 이 프로젝트 폴더를 선택합니다.
 
-### 사용 방법
+### 저장 방식
 
-- 사용자 프로필을 열면 소개 영역 아래에 메모 섹션이 표시됩니다.
-- 사용자 호버 카드를 열면 하단에 작은 **Memo** 배지가 표시되고, 클릭하면 메모 입력창이 펼쳐집니다.
-- 입력 내용은 300ms 후 자동 저장됩니다.
+메모는 아래와 같은 형태로 저장됩니다.
 
-### 개인정보
+```json
+{
+  "@username": {
+    "memo": "개인 메모",
+    "updatedAt": 1712345678901
+  }
+}
+```
 
-모든 메모 데이터는 `chrome.storage.sync`에만 저장됩니다. 외부 서버 전송, 분석 도구, 네트워크 요청은 없습니다.
-
-### 기술 스택
-
-- 바닐라 JavaScript
-- Chrome Extension Manifest V3
-- `chrome.storage.sync`
-
-### 라이선스
-
-MIT
+일반적인 브라우저 캐시 삭제만으로는 메모가 사라지지 않지만, 확장 프로그램 제거 또는 확장 데이터 초기화 시에는 메모가 삭제될 수 있습니다.

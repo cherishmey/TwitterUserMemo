@@ -1,38 +1,6 @@
 {
-  "actionTitle": {
-    "message": "TwitterUserMemo",
-    "description": "툴바 액션 제목"
-  },
-  "extDescription": {
-    "message": "X와 트위터 프로필 페이지 및 호버 카드에 개인 메모를 추가합니다.",
-    "description": "확장 프로그램 설명"
-  },
   "extName": {
-    "message": "TwitterUserMemo",
+    "message": "트위터 유저 메모",
     "description": "확장 프로그램 이름"
-  },
-  "hoverBadge": {
-    "message": "메모",
-    "description": "호버 카드의 축소된 메모 배지 라벨"
-  },
-  "memoHelper": {
-    "message": "개인 메모가 Chrome에 동기화됩니다",
-    "description": "프로필 메모 도움말 문구"
-  },
-  "memoLabel": {
-    "message": "메모",
-    "description": "메모 필드 라벨"
-  },
-  "memoPlaceholder": {
-    "message": "나중에 볼 개인 메모를 남겨보세요",
-    "description": "텍스트 영역 플레이스홀더"
-  },
-  "memoToggleCollapse": {
-    "message": "메모 숨기기",
-    "description": "호버 메모 패널 닫기 접근성 라벨"
-  },
-  "memoToggleExpand": {
-    "message": "메모 열기",
-    "description": "호버 메모 패널 열기 접근성 라벨"
   }
 }
