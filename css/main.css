@@ -1,30 +1,147 @@
-#memoProfileInput {
-    color: black;
-    padding: 0.5em;
-    outline: none;
-    border-radius: 1em;
-    resize: none;
-    overflow: hidden;
-    position: absolute;
-    top: 210px;
-    left: 155px;
+.x-memo-shell {
+  --x-memo-accent: #1d9bf0;
+  --x-memo-bg: #ffffff;
+  --x-memo-border: rgba(15, 20, 25, 0.12);
+  --x-memo-hover: #f7f9f9;
+  --x-memo-muted: #536471;
+  --x-memo-text: #0f1419;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--x-memo-border);
+  border-radius: 16px;
+  background: var(--x-memo-bg);
+  color: var(--x-memo-text);
+  font: inherit;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
-#memoCardInput {
-    color: black;
-    padding: 0.5em;
-    width: 100px;
-    height: 30px;
-    outline: none;
-    border-radius: 1em;
-    resize: none;
-    overflow: hidden;
+.x-memo-shell[data-x-memo-theme="dark"] {
+  --x-memo-bg: #16181c;
+  --x-memo-border: rgba(255, 255, 255, 0.12);
+  --x-memo-hover: #1d1f23;
+  --x-memo-muted: #71767b;
+  --x-memo-text: #e7e9ea;
 }
 
-#memoDiv {
-    height: 46px;
+.x-memo-shell:focus-within {
+  border-color: rgba(29, 155, 240, 0.28);
+  box-shadow: 0 0 0 3px rgba(29, 155, 240, 0.08);
 }
 
-textarea:focus {
-    box-shadow: inset 0 0 2px 1px #1A91DA;
-}​
+.x-memo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.x-memo-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.x-memo-meta,
+.x-memo-helper {
+  color: var(--x-memo-muted);
+  font-size: 12px;
+}
+
+.x-memo-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.x-memo-helper {
+  margin: 0;
+}
+
+.x-memo-textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 82px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.45;
+  outline: none;
+  resize: vertical;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.x-memo-hover .x-memo-textarea {
+  min-height: 72px;
+}
+
+.x-memo-textarea::placeholder {
+  color: var(--x-memo-muted);
+}
+
+.x-memo-textarea:hover,
+.x-memo-textarea:focus {
+  background: var(--x-memo-hover);
+}
+
+.x-memo-textarea:focus {
+  border-color: rgba(29, 155, 240, 0.36);
+  box-shadow: 0 0 0 3px rgba(29, 155, 240, 0.12);
+}
+
+.x-memo-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 8px 12px;
+  border: 1px solid var(--x-memo-border);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.x-memo-toggle:hover {
+  background: var(--x-memo-hover);
+}
+
+.x-memo-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(29, 155, 240, 0.12);
+}
+
+.x-memo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--x-memo-muted);
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.x-memo-hover[data-has-content="true"] .x-memo-dot {
+  background: var(--x-memo-accent);
+  transform: scale(1.15);
+}
+
+.x-memo-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.x-memo-panel[hidden] {
+  display: none !important;
+}

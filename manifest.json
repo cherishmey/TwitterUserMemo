@@ -1,44 +1,37 @@
 {
-    "name": "__MSG_extName__",
-    "version": "0.1",
-    "icons": {
-        "16": "images/icon16.png",
-        "48": "images/icon48.png",
-        "128": "images/icon128.png"
-    },
-    "description": "Twitter memo application",
-    "default_locale": "en",
-    "manifest_version": 2,
-    "permissions": [
-        "storage",
-        "webRequest",
-        "*://*.twitter.com/"
-    ],
-    "background": {
-        "scripts": [
-            "js/background.js"
-        ],
-        "persistent": true
-    },
-    "content_scripts": [
-        {
-            "css": [
-                "css/main.css"
-            ],
-            "matches": [
-                "https://*.twitter.com/*"
-            ],
-            "run_at": "document_end",
-            "js": [
-                "js/memoOnCard.js",
-                "js/memoOnProfile.js"
-            ]
-        }
-    ],
-    "page_action": {
-        "default_icon": {
-            "32": "images/icon24.png"
-        },
-        "default_title": "Twitter Memo"
+  "manifest_version": 3,
+  "name": "__MSG_extName__",
+  "description": "__MSG_extDescription__",
+  "version": "1.0.0",
+  "default_locale": "en",
+  "permissions": [
+    "storage"
+  ],
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "action": {
+    "default_icon": "images/icon24.png",
+    "default_title": "__MSG_actionTitle__"
+  },
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.x.com/*",
+        "*://*.twitter.com/*"
+      ],
+      "js": [
+        "js/content.js"
+      ],
+      "css": [
+        "css/main.css"
+      ],
+      "run_at": "document_idle"
     }
+  ]
 }

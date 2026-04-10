@@ -1,6 +1,38 @@
 {
-    "extName": {
-        "message": "Twitter User Memo",
-        "description": "Extension name."
-    }
+  "actionTitle": {
+    "message": "TwitterUserMemo",
+    "description": "Toolbar action title."
+  },
+  "extDescription": {
+    "message": "Add private memos to X and Twitter profile pages and hover cards.",
+    "description": "Extension description."
+  },
+  "extName": {
+    "message": "TwitterUserMemo",
+    "description": "Extension name."
+  },
+  "hoverBadge": {
+    "message": "Memo",
+    "description": "Collapsed hover card memo badge label."
+  },
+  "memoHelper": {
+    "message": "Private note synced with Chrome",
+    "description": "Profile memo helper text."
+  },
+  "memoLabel": {
+    "message": "Memo",
+    "description": "Memo field label."
+  },
+  "memoPlaceholder": {
+    "message": "Add a private note for yourself",
+    "description": "Textarea placeholder."
+  },
+  "memoToggleCollapse": {
+    "message": "Hide memo",
+    "description": "Accessible label for closing the hover memo panel."
+  },
+  "memoToggleExpand": {
+    "message": "Open memo",
+    "description": "Accessible label for opening the hover memo panel."
+  }
 }
