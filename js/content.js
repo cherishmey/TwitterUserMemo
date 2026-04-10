@@ -1,590 +1,711 @@
-(() => {
+(function () {
   "use strict";
 
-  const SELECTORS = {
-    layers: "div#layers",
-    primaryColumn: '[data-testid="primaryColumn"]',
-    userDescription: '[data-testid="UserDescription"]',
-    userName: '[data-testid="UserName"]'
-  };
+  const PROFILE_TARGET_MARK = "profile-target";
+  const CARD_TARGET_MARK = "card-target";
+  const PROFILE_MEMO_SELECTOR = ".x-memo-profile";
+  const CARD_MEMO_SELECTOR = ".x-memo-card";
 
-  const NAVIGATION_EVENT = "x-memo:navigation";
-  const USERNAME_PATH_PATTERN = /^\/([A-Za-z0-9_]{1,15})$/;
+  let currentProfileScreenName = null;
+  let profileObserver = null;
+  let layersObserver = null;
+  let layersWaitObserver = null;
+  let themeObserver = null;
   const RESERVED_PATHS = new Set([
-    "account",
-    "compose",
-    "download",
-    "explore",
-    "followers",
-    "following",
-    "hashtag",
     "home",
-    "i",
-    "intent",
-    "jobs",
-    "login",
-    "messages",
+    "explore",
     "notifications",
-    "privacy",
+    "messages",
+    "i",
     "search",
     "settings",
-    "share",
+    "compose",
+    "login",
     "signup",
     "tos",
-    "x"
+    "privacy",
+    "about"
   ]);
 
-  const STRINGS = {
-    hoverBadge: getMessage("hoverBadge", "Memo"),
-    memoHelper: getMessage("memoHelper", "Private note synced with Chrome"),
-    memoLabel: getMessage("memoLabel", "Memo"),
-    memoPlaceholder: getMessage("memoPlaceholder", "Add a private note for yourself"),
-    memoToggleCollapse: getMessage("memoToggleCollapse", "Hide memo"),
-    memoToggleExpand: getMessage("memoToggleExpand", "Open memo")
-  };
-
-  let bodyObserver;
-  let hoverObserver;
-  let themeObserver;
-  let observedLayers = null;
-  let profileFrame = 0;
-  let hoverFrame = 0;
-
-  function getMessage(key, fallback) {
+  function extractScreenNameFromPath(pathname) {
     try {
-      return chrome.i18n.getMessage(key) || fallback;
-    } catch (error) {
-      return fallback;
+      const match = pathname.match(/^\/([a-zA-Z0-9_]{1,15})(?:\/|$)/);
+      if (!match) {
+        return null;
+      }
+
+      const candidate = match[1];
+      if (RESERVED_PATHS.has(candidate.toLowerCase())) {
+        return null;
+      }
+
+      return `@${candidate}`;
+    } catch {
+      return null;
     }
   }
 
-  function init() {
-    patchHistoryMethods();
-    observeBody();
-    observeTheme();
-    window.addEventListener(NAVIGATION_EVENT, handleNavigation);
-    window.addEventListener("popstate", handleNavigation);
-    scheduleProfileSync();
-    observeHoverLayers();
-    scheduleHoverSync();
-  }
+  function extractExactScreenNameFromPath(pathname) {
+    try {
+      const match = pathname.match(/^\/([a-zA-Z0-9_]{1,15})\/?$/);
+      if (!match) {
+        return null;
+      }
 
-  function handleNavigation() {
-    scheduleProfileSync();
-    scheduleHoverSync();
-  }
+      const candidate = match[1];
+      if (RESERVED_PATHS.has(candidate.toLowerCase())) {
+        return null;
+      }
 
-  function patchHistoryMethods() {
-    if (window.__xMemoHistoryPatched) {
-      return;
+      return `@${candidate}`;
+    } catch {
+      return null;
     }
+  }
 
-    // X navigates client-side, so we mirror history changes into one custom signal.
-    const wrapHistoryMethod = (methodName) => {
-      const original = window.history[methodName];
+  function getScreenName() {
+    return extractScreenNameFromPath(window.location.pathname);
+  }
 
-      window.history[methodName] = function patchedHistoryMethod(...args) {
-        const result = original.apply(this, args);
-        window.dispatchEvent(new Event(NAVIGATION_EVENT));
-        return result;
-      };
+  function debounce(fn, ms) {
+    let timeoutId = null;
+    return function debounced(...args) {
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        fn.apply(this, args);
+      }, ms);
     };
-
-    wrapHistoryMethod("pushState");
-    wrapHistoryMethod("replaceState");
-    window.__xMemoHistoryPatched = true;
   }
 
-  function observeBody() {
-    if (bodyObserver || !document.body) {
-      return;
-    }
-
-    bodyObserver = new MutationObserver(() => {
-      observeHoverLayers();
-      scheduleProfileSync();
-    });
-
-    bodyObserver.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-  }
-
-  function observeTheme() {
-    if (themeObserver) {
-      return;
-    }
-
-    themeObserver = new MutationObserver(refreshThemes);
-
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class", "data-color-mode", "data-theme"]
-    });
-
-    if (document.body) {
-      themeObserver.observe(document.body, {
-        attributes: true,
-        attributeFilter: ["class", "data-color-mode", "data-theme"]
-      });
-    }
-  }
-
-  function observeHoverLayers() {
-    const layers = document.querySelector(SELECTORS.layers);
-
-    if (!layers) {
-      observedLayers = null;
-      if (hoverObserver) {
-        hoverObserver.disconnect();
-        hoverObserver = null;
-      }
-      return;
-    }
-
-    if (layers === observedLayers) {
-      return;
-    }
-
-    observedLayers = layers;
-    if (hoverObserver) {
-      hoverObserver.disconnect();
-    }
-
-    hoverObserver = new MutationObserver(() => {
-      scheduleHoverSync();
-    });
-
-    hoverObserver.observe(layers, {
-      childList: true,
-      subtree: true
-    });
-
-    scheduleHoverSync();
-  }
-
-  function scheduleProfileSync() {
-    if (profileFrame) {
-      return;
-    }
-
-    profileFrame = window.requestAnimationFrame(() => {
-      profileFrame = 0;
-      void syncProfileMemo();
-      refreshThemes();
-    });
-  }
-
-  function scheduleHoverSync() {
-    if (hoverFrame) {
-      return;
-    }
-
-    hoverFrame = window.requestAnimationFrame(() => {
-      hoverFrame = 0;
-      void syncHoverMemos();
-      refreshThemes();
-    });
-  }
-
-  async function syncProfileMemo() {
+  function saveMemo(screenName, text) {
     try {
-      const primaryColumn = document.querySelector(SELECTORS.primaryColumn);
-      const screenName = getProfileScreenName();
-      const existingWidgets = document.querySelectorAll(".x-memo-profile");
-
-      if (!primaryColumn || !screenName) {
-        removeNodes(existingWidgets);
-        return;
-      }
-
-      const description = primaryColumn.querySelector(SELECTORS.userDescription);
-      const userName = primaryColumn.querySelector(SELECTORS.userName);
-      const host = description || userName;
-
-      if (!host) {
-        removeNodes(existingWidgets);
-        return;
-      }
-
-      existingWidgets.forEach((widget) => {
-        if (!primaryColumn.contains(widget)) {
-          widget.remove();
+      return chrome.storage.sync.set({
+        [screenName]: {
+          memo: text,
+          updatedAt: Date.now()
         }
       });
-
-      let widget = primaryColumn.querySelector(".x-memo-profile");
-      if (!widget) {
-        widget = createMemoShell("profile");
-      }
-
-      if (host.nextElementSibling !== widget) {
-        host.insertAdjacentElement("afterend", widget);
-      }
-
-      await hydrateMemoShell(widget, screenName);
-    } catch (error) {
-      return;
+    } catch {
+      return Promise.resolve();
     }
   }
 
-  async function syncHoverMemos() {
+  function loadMemo(screenName) {
     try {
-      const layers = observedLayers || document.querySelector(SELECTORS.layers);
-
-      if (!layers) {
-        return;
-      }
-
-      const roots = collectHoverRoots(layers);
-      const liveRoots = new Set(roots);
-
-      layers.querySelectorAll(".x-memo-hover").forEach((widget) => {
-        if (!liveRoots.has(widget.parentElement)) {
-          widget.remove();
-        }
-      });
-
-      for (const root of roots) {
-        const screenName = extractScreenNameFromScope(root);
-
-        if (!screenName) {
-          continue;
-        }
-
-        let widget = Array.from(root.children).find((child) => child.classList?.contains("x-memo-hover"));
-        if (!widget) {
-          widget = createMemoShell("hover");
-          root.appendChild(widget);
-        }
-
-        await hydrateMemoShell(widget, screenName);
-      }
-    } catch (error) {
-      return;
+      return chrome.storage.sync
+        .get([screenName])
+        .then((result) => result[screenName]?.memo || "")
+        .catch(() => "");
+    } catch {
+      return Promise.resolve("");
     }
   }
 
-  function collectHoverRoots(layers) {
-    const roots = new Set();
-
-    layers.querySelectorAll(SELECTORS.userName).forEach((node) => {
-      const root = resolveHoverRoot(node, layers);
-      if (!root) {
-        return;
-      }
-
-      if (root.querySelectorAll(SELECTORS.userName).length > 2) {
-        return;
-      }
-
-      roots.add(root);
-    });
-
-    return Array.from(roots);
+  function safeQuery(root, selector) {
+    try {
+      return root?.querySelector?.(selector) || null;
+    } catch {
+      return null;
+    }
   }
 
-  function resolveHoverRoot(node, layers) {
-    if (!(node instanceof Element)) {
+  function safeQueryAll(root, selector) {
+    try {
+      return Array.from(root?.querySelectorAll?.(selector) || []);
+    } catch {
+      return [];
+    }
+  }
+
+  function safeClosest(element, selector) {
+    try {
+      return element?.closest?.(selector) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function insertAfter(target, element) {
+    try {
+      target?.insertAdjacentElement?.("afterend", element);
+      return true;
+    } catch {
+      try {
+        target?.parentNode?.insertBefore?.(element, target.nextSibling);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  function prependTo(target, element) {
+    try {
+      target?.insertBefore?.(element, target.firstChild || null);
+      return true;
+    } catch {
+      try {
+        target?.appendChild?.(element);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  function autoResize(textarea) {
+    try {
+      textarea.style.height = "auto";
+      const nextHeight = Math.min(Math.max(textarea.scrollHeight, 60), 200);
+      textarea.style.height = `${nextHeight}px`;
+    } catch {}
+  }
+
+  function extractHandleFromHref(href) {
+    try {
+      const url = new URL(href, window.location.origin);
+      return extractScreenNameFromPath(url.pathname);
+    } catch {
+      return null;
+    }
+  }
+
+  function getHandleFromUserName(userNameElement) {
+    const links = safeQueryAll(userNameElement, "a[href]");
+    for (const link of links) {
+      const handle = extractHandleFromHref(link.href);
+      if (handle) {
+        return handle;
+      }
+    }
+
+    try {
+      const text = userNameElement?.textContent || "";
+      const match = text.match(/@([a-zA-Z0-9_]{1,15})/);
+      return match ? `@${match[1]}` : null;
+    } catch {
       return null;
     }
 
-    // Prefer the dialog wrapper when present, then fall back to the top portal child.
-    const dialog = node.closest('[role="dialog"]');
-    if (dialog && layers.contains(dialog)) {
-      return dialog;
-    }
-
-    let current = node;
-    while (current.parentElement && current.parentElement !== layers) {
-      current = current.parentElement;
-    }
-
-    return current.parentElement === layers ? current : null;
+    return null;
   }
 
-  function createMemoShell(kind) {
-    const shell = document.createElement("section");
-    shell.className = `x-memo-shell x-memo-${kind}`;
-    shell.dataset.hasContent = "false";
-    shell.dataset.xMemoTheme = getTheme();
+  function isDarkTheme() {
+    try {
+      const rootDataset = Object.values(document.documentElement?.dataset || {}).join(" ").toLowerCase();
+      const bodyDataset = Object.values(document.body?.dataset || {}).join(" ").toLowerCase();
+      const bodyClassName =
+        typeof document.body?.className === "string"
+          ? document.body.className.toLowerCase()
+          : Array.from(document.body?.classList || []).join(" ").toLowerCase();
+      const rootClassName =
+        typeof document.documentElement?.className === "string"
+          ? document.documentElement.className.toLowerCase()
+          : Array.from(document.documentElement?.classList || []).join(" ").toLowerCase();
+      const signals = [rootDataset, bodyDataset, bodyClassName, rootClassName].join(" ");
+      return signals.includes("dark") || signals.includes("dim");
+    } catch {
+      return false;
+    }
+  }
 
-    const header = document.createElement("div");
-    header.className = "x-memo-header";
+  function syncThemeClass() {
+    try {
+      document.documentElement.classList.toggle("x-memo-dark", isDarkTheme());
+    } catch {}
+  }
 
-    const label = document.createElement("span");
-    label.className = "x-memo-label";
-    label.textContent = STRINGS.memoLabel;
+  function clearProfileMemo() {
+    const memos = safeQueryAll(document, PROFILE_MEMO_SELECTOR);
+    for (const memo of memos) {
+      try {
+        memo.remove();
+      } catch {}
+    }
 
-    const meta = document.createElement("span");
-    meta.className = "x-memo-meta";
+    const markedTargets = safeQueryAll(document, `[data-xmemo="${PROFILE_TARGET_MARK}"]`);
+    for (const target of markedTargets) {
+      try {
+        target.removeAttribute("data-xmemo");
+      } catch {}
+    }
+  }
 
-    header.append(label, meta);
-
+  function createMemoTextarea(screenName, ariaLabel) {
     const textarea = document.createElement("textarea");
     textarea.className = "x-memo-textarea";
     textarea.rows = 3;
-    textarea.placeholder = STRINGS.memoPlaceholder;
-    textarea.setAttribute("aria-label", STRINGS.memoLabel);
+    textarea.setAttribute("aria-label", ariaLabel);
 
-    bindAutosave(shell, textarea);
-
-    if (kind === "profile") {
-      const helper = document.createElement("p");
-      helper.className = "x-memo-helper";
-      helper.textContent = STRINGS.memoHelper;
-      shell.append(header, textarea, helper);
-      return shell;
-    }
-
-    const toggle = document.createElement("button");
-    toggle.type = "button";
-    toggle.className = "x-memo-toggle";
-    toggle.setAttribute("aria-expanded", "false");
-    toggle.setAttribute("aria-label", STRINGS.memoToggleExpand);
-
-    const dot = document.createElement("span");
-    dot.className = "x-memo-dot";
-    dot.setAttribute("aria-hidden", "true");
-
-    const text = document.createElement("span");
-    text.textContent = STRINGS.hoverBadge;
-
-    toggle.append(dot, text);
-
-    const panel = document.createElement("div");
-    panel.className = "x-memo-panel";
-    panel.hidden = true;
-    panel.append(header, textarea);
-
-    toggle.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const expanded = toggle.getAttribute("aria-expanded") === "true";
-      const nextExpanded = String(!expanded);
-
-      toggle.setAttribute("aria-expanded", nextExpanded);
-      toggle.setAttribute(
-        "aria-label",
-        expanded ? STRINGS.memoToggleExpand : STRINGS.memoToggleCollapse
-      );
-      panel.hidden = expanded;
-
-      if (!expanded) {
-        textarea.focus({ preventScroll: true });
-      }
-    });
-
-    shell.append(toggle, panel);
-    return shell;
-  }
-
-  function bindAutosave(shell, textarea) {
-    if (shell.dataset.bound === "true") {
-      return;
-    }
-
-    // Keep saves cheap while the user types and always persist by screen name.
-    const saveMemo = debounce((screenName, memo) => {
-      if (!screenName) {
-        return;
-      }
-
-      void writeMemo(screenName, memo);
+    const saveDebounced = debounce(() => {
+      saveMemo(screenName, textarea.value || "");
     }, 300);
 
     textarea.addEventListener("input", () => {
-      const screenName = shell.dataset.screenName || "";
-      updateMemoState(shell, textarea.value);
-      saveMemo(screenName, textarea.value);
+      autoResize(textarea);
+      saveDebounced();
     });
 
-    shell.dataset.bound = "true";
+    return textarea;
   }
 
-  async function hydrateMemoShell(shell, screenName) {
-    const textarea = shell.querySelector(".x-memo-textarea");
-    const meta = shell.querySelector(".x-memo-meta");
-
-    if (!(textarea instanceof HTMLTextAreaElement) || !(meta instanceof HTMLElement)) {
-      return;
-    }
-
-    shell.dataset.screenName = screenName;
-    shell.dataset.xMemoTheme = getTheme();
-    meta.textContent = screenName;
-
-    if (shell.dataset.loadedFor === screenName) {
-      updateMemoState(shell, textarea.value);
-      return;
-    }
-
-    shell.dataset.loadedFor = screenName;
-    const requestId = String(Date.now()) + Math.random().toString(16).slice(2);
-    shell.dataset.requestId = requestId;
-    textarea.value = "";
-
-    const entry = await readMemo(screenName);
-    if (shell.dataset.requestId !== requestId || shell.dataset.screenName !== screenName) {
-      return;
-    }
-
-    textarea.value = entry?.memo || "";
-    updateMemoState(shell, textarea.value);
+  function populateMemo(textarea, screenName, isStale) {
+    loadMemo(screenName).then((memo) => {
+      if (!textarea.isConnected) {
+        return;
+      }
+      if (typeof isStale === "function" && isStale()) {
+        return;
+      }
+      textarea.value = memo;
+      autoResize(textarea);
+    });
   }
 
-  function updateMemoState(shell, memo) {
-    shell.dataset.hasContent = String(memo.trim().length > 0);
-  }
+  function findProfileUserName(primaryColumn, userDescription) {
+    const userNames = safeQueryAll(primaryColumn, '[data-testid="UserName"]');
 
-  function getProfileScreenName() {
-    return parseScreenName(window.location.pathname);
-  }
+    if (userDescription) {
+      for (const node of userNames) {
+        const handle = getHandleFromUserName(node);
+        let insideArticle = false;
 
-  function extractScreenNameFromScope(scope) {
-    const userNameSection = scope.querySelector(SELECTORS.userName);
-    const sections = userNameSection ? [userNameSection, scope] : [scope];
+        try {
+          insideArticle = Boolean(node.closest("article"));
+        } catch {}
 
-    for (const section of sections) {
-      const links = section.querySelectorAll("a[href]");
-      for (const link of links) {
-        const screenName = parseScreenNameFromHref(link.getAttribute("href"));
-        if (screenName) {
-          return screenName;
+        if (!handle || insideArticle) {
+          continue;
         }
+
+        try {
+          if (node.compareDocumentPosition(userDescription) & Node.DOCUMENT_POSITION_FOLLOWING) {
+            return node;
+          }
+        } catch {
+          return node;
+        }
+      }
+    }
+
+    for (const node of userNames) {
+      const handle = getHandleFromUserName(node);
+      let insideArticle = false;
+
+      try {
+        insideArticle = Boolean(node.closest("article"));
+      } catch {}
+
+      if (handle && !insideArticle) {
+        return node;
       }
     }
 
     return null;
   }
 
-  function parseScreenNameFromHref(href) {
-    if (!href) {
-      return null;
-    }
-
-    try {
-      const url = new URL(href, window.location.origin);
-      return parseScreenName(url.pathname);
-    } catch (error) {
-      return null;
-    }
+  function getProfileRoot() {
+    return (
+      safeQuery(document, '[data-testid="primaryColumn"]') ||
+      safeQuery(document, 'main[role="main"]') ||
+      safeQuery(document, "main") ||
+      null
+    );
   }
 
-  function parseScreenName(pathname) {
-    const cleanPath = pathname.replace(/\/+$/, "") || "/";
-    const match = cleanPath.match(USERNAME_PATH_PATTERN);
+  function findProfileLink(root, screenName) {
+    const links = safeQueryAll(root, "a[href]");
 
-    if (!match) {
-      return null;
-    }
-
-    const rawName = match[1];
-    if (RESERVED_PATHS.has(rawName.toLowerCase())) {
-      return null;
-    }
-
-    return `@${rawName}`;
-  }
-
-  function getTheme() {
-    try {
-      const tokens = [
-        document.documentElement.dataset.theme,
-        document.documentElement.dataset.colorMode,
-        document.documentElement.getAttribute("data-theme"),
-        document.documentElement.getAttribute("data-color-mode"),
-        document.documentElement.className,
-        document.body?.dataset.theme,
-        document.body?.dataset.colorMode,
-        document.body?.className
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      if (tokens.includes("dark") || tokens.includes("dim") || tokens.includes("lightsout")) {
-        return "dark";
+    for (const link of links) {
+      const handle = (() => {
+        try {
+          const url = new URL(link.href, window.location.origin);
+          return extractExactScreenNameFromPath(url.pathname);
+        } catch {
+          return null;
+        }
+      })();
+      if (handle !== screenName) {
+        continue;
       }
-    } catch (error) {
-      return "light";
+
+      let insideArticle = false;
+      let insideLayers = false;
+
+      try {
+        insideArticle = Boolean(link.closest("article"));
+      } catch {}
+
+      try {
+        insideLayers = Boolean(link.closest("#layers"));
+      } catch {}
+
+      if (!insideArticle && !insideLayers) {
+        return link;
+      }
     }
 
-    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return null;
   }
 
-  function refreshThemes() {
-    const theme = getTheme();
-    document.querySelectorAll(".x-memo-shell").forEach((node) => {
-      node.dataset.xMemoTheme = theme;
+  function findProfileInsertionTarget(profileRoot, screenName, userName, userDescription) {
+    if (userDescription) {
+      return userDescription;
+    }
+
+    if (userName) {
+      return userName.parentElement || userName;
+    }
+
+    const profileLink = findProfileLink(profileRoot, screenName);
+    if (!profileLink) {
+      return profileRoot.firstElementChild || profileRoot;
+    }
+
+    return (
+      safeClosest(profileLink, '[data-testid="UserName"]') ||
+      safeClosest(profileLink, "header") ||
+      safeClosest(profileLink, "section") ||
+      profileLink.parentElement ||
+      profileLink
+    );
+  }
+
+  function renderProfileMemo() {
+    syncThemeClass();
+
+    const profileRoot = getProfileRoot();
+    if (!profileRoot) {
+      return;
+    }
+
+    const userDescription = safeQuery(profileRoot, '[data-testid="UserDescription"]');
+    const urlScreenName = getScreenName();
+
+    if (!urlScreenName && !userDescription) {
+      return;
+    }
+
+    const userName = findProfileUserName(profileRoot, userDescription);
+    const screenName = (userName ? getHandleFromUserName(userName) : null) || urlScreenName;
+    if (!screenName) {
+      return;
+    }
+
+    if (currentProfileScreenName && currentProfileScreenName !== screenName) {
+      clearProfileMemo();
+    }
+
+    const existingMemo = safeQuery(profileRoot, PROFILE_MEMO_SELECTOR);
+    if (existingMemo && currentProfileScreenName === screenName) {
+      return;
+    }
+
+    const insertionTarget = findProfileInsertionTarget(profileRoot, screenName, userName, userDescription);
+    if (!insertionTarget) {
+      return;
+    }
+
+    if (insertionTarget.dataset.xmemo && !existingMemo) {
+      try {
+        insertionTarget.removeAttribute("data-xmemo");
+      } catch {}
+    }
+
+    if (insertionTarget.dataset.xmemo) {
+      return;
+    }
+
+    const container = document.createElement("div");
+    container.className = "x-memo-profile";
+
+    const label = document.createElement("div");
+    label.className = "x-memo-label";
+    label.textContent = "Memo";
+
+    const textarea = createMemoTextarea(screenName, "Profile memo");
+
+    container.appendChild(label);
+    container.appendChild(textarea);
+
+    const inserted =
+      insertionTarget === profileRoot ? prependTo(profileRoot, container) : insertAfter(insertionTarget, container);
+
+    if (!inserted) {
+      return;
+    }
+
+    insertionTarget.dataset.xmemo = PROFILE_TARGET_MARK;
+    currentProfileScreenName = screenName;
+    populateMemo(textarea, screenName, () => currentProfileScreenName !== screenName);
+  }
+
+  function createCardToggleMarkup() {
+    return (
+      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="14" height="14">' +
+      '<path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 2.33H5v-.92l8.06-8.06.92.92L5.92 19.58zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.5 1.5 3.75 3.75 1.5-1.5z"></path>' +
+      "</svg>" +
+      "<span>Memo</span>"
+    );
+  }
+
+  function findHoverCardContent(rootNode, userName) {
+    const candidates = [
+      safeQuery(rootNode, '[data-testid="HoverCard"]'),
+      safeClosest(userName, 'div[role="dialog"]'),
+      safeClosest(userName, '[data-testid="HoverCard"]'),
+      safeClosest(userName, '[data-testid="TypeaheadUser"]'),
+      safeClosest(userName, "section"),
+      safeClosest(userName, "article"),
+      rootNode
+    ];
+
+    for (const candidate of candidates) {
+      if (candidate && candidate.nodeType === Node.ELEMENT_NODE) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  function injectHoverCardMemo(rootNode) {
+    if (!(rootNode instanceof Element)) {
+      return;
+    }
+
+    const userName = safeQuery(rootNode, '[data-testid="UserName"]');
+    if (!userName) {
+      return;
+    }
+
+    const screenName = getHandleFromUserName(userName);
+    if (!screenName) {
+      return;
+    }
+
+    const cardContent = findHoverCardContent(rootNode, userName);
+    if (!cardContent) {
+      return;
+    }
+
+    if (safeQuery(cardContent, CARD_MEMO_SELECTOR)) {
+      return;
+    }
+
+    if (cardContent.dataset.xmemo) {
+      return;
+    }
+
+    const container = document.createElement("div");
+    container.className = "x-memo-card";
+
+    const toggle = document.createElement("button");
+    toggle.className = "x-memo-toggle";
+    toggle.type = "button";
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-label", "Toggle memo");
+    toggle.innerHTML = createCardToggleMarkup();
+
+    const body = document.createElement("div");
+    body.className = "x-memo-card-body";
+
+    const textarea = createMemoTextarea(screenName, "Hover card memo");
+    body.appendChild(textarea);
+
+    let hasLoaded = false;
+
+    toggle.addEventListener("click", () => {
+      const isOpen = body.classList.toggle("open");
+      toggle.setAttribute("aria-expanded", String(isOpen));
+
+      if (!isOpen) {
+        return;
+      }
+
+      if (!hasLoaded) {
+        hasLoaded = true;
+        populateMemo(textarea, screenName);
+      } else {
+        autoResize(textarea);
+      }
+    });
+
+    container.appendChild(toggle);
+    container.appendChild(body);
+
+    try {
+      cardContent.appendChild(container);
+      cardContent.dataset.xmemo = CARD_TARGET_MARK;
+    } catch {}
+  }
+
+  function scanHoverCards(rootNode) {
+    if (!(rootNode instanceof Element)) {
+      return;
+    }
+
+    injectHoverCardMemo(rootNode);
+
+    const candidates = safeQueryAll(
+      rootNode,
+      '[data-testid="HoverCard"], div[role="dialog"], [data-testid="TypeaheadUser"], section, article'
+    );
+
+    for (const candidate of candidates) {
+      injectHoverCardMemo(candidate);
+    }
+  }
+
+  const scheduleProfileRender = debounce(renderProfileMemo, 80);
+  const scheduleHoverScan = debounce(() => {
+    const layers = safeQuery(document, "div#layers");
+    if (layers) {
+      scanHoverCards(layers);
+    }
+  }, 60);
+
+  function handleLocationChange() {
+    currentProfileScreenName = null;
+    clearProfileMemo();
+    syncThemeClass();
+    scheduleProfileRender();
+  }
+
+  function patchHistoryMethod(methodName) {
+    try {
+      const original = history[methodName];
+      if (original.__xMemoPatched) {
+        return;
+      }
+
+      const patched = function patchedHistoryState(...args) {
+        const result = original.apply(this, args);
+        window.dispatchEvent(new Event("locationchange"));
+        return result;
+      };
+
+      patched.__xMemoPatched = true;
+      history[methodName] = patched;
+    } catch {}
+  }
+
+  function observeProfileArea() {
+    if (!document.body || profileObserver) {
+      return;
+    }
+
+    profileObserver = new MutationObserver(() => {
+      syncThemeClass();
+      scheduleProfileRender();
+    });
+
+    profileObserver.observe(document.body, {
+      childList: true,
+      subtree: true
     });
   }
 
-  async function readMemo(screenName) {
-    return new Promise((resolve) => {
+  function startLayersObserver() {
+    if (layersObserver) {
+      return true;
+    }
+
+    const layers = safeQuery(document, "div#layers");
+    if (!layers) {
+      return false;
+    }
+
+    layersObserver = new MutationObserver((mutations) => {
+      syncThemeClass();
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          scanHoverCards(node);
+        }
+
+        if (mutation.target instanceof Element) {
+          scanHoverCards(mutation.target);
+        }
+      }
+
+      scheduleHoverScan();
+    });
+
+    layersObserver.observe(layers, { childList: true, subtree: true });
+
+    scanHoverCards(layers);
+
+    return true;
+  }
+
+  function observeLayers() {
+    if (startLayersObserver()) {
+      return;
+    }
+
+    if (layersWaitObserver) {
+      return;
+    }
+
+    layersWaitObserver = new MutationObserver(() => {
+      if (startLayersObserver()) {
+        layersWaitObserver.disconnect();
+        layersWaitObserver = null;
+      }
+    });
+
+    layersWaitObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  function observeThemeChanges() {
+    if (themeObserver) {
+      return;
+    }
+
+    themeObserver = new MutationObserver(() => {
+      syncThemeClass();
+    });
+
+    try {
+      themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class", "data-theme", "data-color-mode", "data-mode"]
+      });
+    } catch {}
+
+    if (document.body) {
       try {
-        chrome.storage.sync.get(screenName, (result) => {
-          if (chrome.runtime.lastError) {
-            resolve(null);
-            return;
-          }
-
-          const entry = result?.[screenName];
-          if (!entry || typeof entry.memo !== "string") {
-            resolve(null);
-            return;
-          }
-
-          resolve(entry);
+        themeObserver.observe(document.body, {
+          attributes: true,
+          attributeFilter: ["class", "data-theme", "data-color-mode", "data-mode"]
         });
-      } catch (error) {
-        resolve(null);
-      }
-    });
+      } catch {}
+    }
   }
 
-  async function writeMemo(screenName, memo) {
-    return new Promise((resolve) => {
-      try {
-        chrome.storage.sync.set(
-          {
-            [screenName]: {
-              memo,
-              updatedAt: Date.now()
-            }
-          },
-          () => {
-            resolve(!chrome.runtime.lastError);
-          }
-        );
-      } catch (error) {
-        resolve(false);
-      }
+  function bootstrap() {
+    syncThemeClass();
+    patchHistoryMethod("pushState");
+    patchHistoryMethod("replaceState");
+
+    window.addEventListener("popstate", () => {
+      window.dispatchEvent(new Event("locationchange"));
     });
-  }
 
-  function debounce(callback, wait) {
-    let timerId = 0;
+    window.addEventListener("locationchange", handleLocationChange);
 
-    return (...args) => {
-      window.clearTimeout(timerId);
-      timerId = window.setTimeout(() => {
-        callback(...args);
-      }, wait);
-    };
-  }
-
-  function removeNodes(nodes) {
-    nodes.forEach((node) => {
-      node.remove();
-    });
+    observeThemeChanges();
+    observeProfileArea();
+    observeLayers();
+    renderProfileMemo();
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init, { once: true });
+    document.addEventListener("DOMContentLoaded", bootstrap, { once: true });
   } else {
-    init();
+    bootstrap();
   }
 })();
