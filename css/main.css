@@ -2,10 +2,10 @@
 
 :root {
   /* Palette */
-  --x-memo-bg: #f7f9f9;
+  --x-memo-bg: #ffffff;
   --x-memo-text: #0f1419;
-  --x-memo-placeholder: #9da8b1;
-  --x-memo-border: transparent;
+  --x-memo-placeholder: #a0aab4;
+  --x-memo-border: #eff3f4;
   --x-memo-border-hover: #cfd9de;
   --x-memo-label: #536471;
   --x-memo-focus: #1d9bf0;
