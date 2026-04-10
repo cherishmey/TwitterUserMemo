@@ -156,7 +156,7 @@
   function autoResize(textarea) {
     try {
       textarea.style.height = "auto";
-      const nextHeight = Math.min(Math.max(textarea.scrollHeight, 60), 200);
+      const nextHeight = Math.min(Math.max(textarea.scrollHeight, 48), 200);
       textarea.style.height = `${nextHeight}px`;
     } catch {}
   }
@@ -234,7 +234,8 @@
   function createMemoTextarea(screenName, ariaLabel) {
     const textarea = document.createElement("textarea");
     textarea.className = "x-memo-textarea";
-    textarea.rows = 3;
+    textarea.rows = 2;
+    textarea.placeholder = "Write a note\u2026";
     textarea.setAttribute("aria-label", ariaLabel);
 
     const saveDebounced = debounce(() => {
@@ -421,7 +422,11 @@
 
     const label = document.createElement("div");
     label.className = "x-memo-label";
-    label.textContent = "Memo";
+    label.innerHTML =
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>' +
+      "</svg>" +
+      "<span>Memo</span>";
 
     const textarea = createMemoTextarea(screenName, "Profile memo");
 
@@ -442,8 +447,8 @@
 
   function createCardToggleMarkup() {
     return (
-      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="14" height="14">' +
-      '<path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 2.33H5v-.92l8.06-8.06.92.92L5.92 19.58zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.5 1.5 3.75 3.75 1.5-1.5z"></path>' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>' +
       "</svg>" +
       "<span>Memo</span>"
     );
