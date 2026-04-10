@@ -13,16 +13,9 @@
   --x-memo-toggle-hover: rgba(29, 155, 240, 0.08);
   --x-memo-toggle-active: rgba(29, 155, 240, 0.14);
   --x-memo-toggle-text: #536471;
-  --x-memo-disabled-bg: #f0f2f2;
-  --x-memo-disabled-text: #a0a8b0;
 
   /* Shape */
   --x-memo-radius: 8px;
-
-  /* Elevation */
-  --x-memo-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --x-memo-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --x-memo-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
 
   /* Typography */
   --x-memo-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -40,11 +33,6 @@
   --x-memo-toggle-hover: rgba(29, 155, 240, 0.12);
   --x-memo-toggle-active: rgba(29, 155, 240, 0.2);
   --x-memo-toggle-text: #71767b;
-  --x-memo-disabled-bg: #1e2226;
-  --x-memo-disabled-text: #50565c;
-  --x-memo-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.12);
-  --x-memo-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --x-memo-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.28);
 }
 
 /* ── Profile memo ── */
@@ -93,7 +81,7 @@
   resize: none;
   outline: none;
   overflow-y: auto;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 
 .x-memo-textarea::placeholder {
@@ -101,19 +89,12 @@
   font-weight: 400;
 }
 
-.x-memo-textarea:hover:not(:disabled) {
+.x-memo-textarea:hover {
   border-color: var(--x-memo-border-hover);
 }
 
-.x-memo-textarea:focus:not(:disabled) {
+.x-memo-textarea:focus {
   border-color: var(--x-memo-focus);
-  box-shadow: 0 0 0 3px rgba(29, 155, 240, 0.15);
-}
-
-.x-memo-textarea:disabled {
-  background: var(--x-memo-disabled-bg);
-  color: var(--x-memo-disabled-text);
-  cursor: not-allowed;
 }
 
 /* ── Hover-card memo ── */
@@ -137,27 +118,21 @@
   font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
-  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.x-memo-toggle:hover:not(:disabled) {
+.x-memo-toggle:hover {
   background: var(--x-memo-toggle-hover);
   color: var(--x-memo-focus);
 }
 
 .x-memo-toggle:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(29, 155, 240, 0.15);
+  outline: 2px solid var(--x-memo-focus);
+  outline-offset: 2px;
 }
 
-.x-memo-toggle:active:not(:disabled) {
+.x-memo-toggle:active {
   background: var(--x-memo-toggle-active);
-}
-
-.x-memo-toggle:disabled {
-  color: var(--x-memo-disabled-text);
-  border-color: var(--x-memo-disabled-bg);
-  cursor: not-allowed;
 }
 
 .x-memo-toggle svg {
