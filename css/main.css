@@ -2,20 +2,17 @@
 
 :root {
   /* Palette */
-  --x-memo-bg: #ffffff;
+  --x-memo-bg: rgba(255, 255, 255, 0.92);
   --x-memo-text: #0f1419;
   --x-memo-placeholder: #a0aab4;
   --x-memo-border: #eff3f4;
   --x-memo-border-hover: #cfd9de;
-  --x-memo-label: #536471;
   --x-memo-focus: #1d9bf0;
-  --x-memo-toggle-bg: transparent;
-  --x-memo-toggle-hover: rgba(29, 155, 240, 0.08);
-  --x-memo-toggle-active: rgba(29, 155, 240, 0.14);
-  --x-memo-toggle-text: #536471;
+  --x-memo-panel-border: rgba(15, 20, 25, 0.08);
+  --x-memo-panel-shadow: 0 1px 2px rgba(15, 20, 25, 0.04);
 
   /* Shape */
-  --x-memo-radius: 8px;
+  --x-memo-radius: 10px;
 
   /* Typography */
   --x-memo-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -23,16 +20,13 @@
 }
 
 .x-memo-dark {
-  --x-memo-bg: rgba(39, 44, 48, 0.6);
+  --x-memo-bg: rgba(39, 44, 48, 0.88);
   --x-memo-text: #e7e9ea;
   --x-memo-placeholder: #6e767d;
-  --x-memo-border: transparent;
+  --x-memo-border: #2f3336;
   --x-memo-border-hover: #3d4349;
-  --x-memo-label: #71767b;
-  --x-memo-toggle-bg: transparent;
-  --x-memo-toggle-hover: rgba(29, 155, 240, 0.12);
-  --x-memo-toggle-active: rgba(29, 155, 240, 0.2);
-  --x-memo-toggle-text: #71767b;
+  --x-memo-panel-border: rgba(255, 255, 255, 0.08);
+  --x-memo-panel-shadow: none;
 }
 
 /* ── Profile memo ── */
@@ -42,25 +36,9 @@
   flex-direction: column;
   gap: 8px;
   width: 100%;
-  padding: 0 16px 16px;
+  padding: 12px 16px 16px;
+  margin-top: 8px;
   box-sizing: border-box;
-}
-
-.x-memo-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--x-memo-label);
-  font-family: var(--x-memo-font);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: 0.02em;
-}
-
-.x-memo-label svg {
-  flex-shrink: 0;
-  opacity: 0.7;
 }
 
 /* ── Textarea (shared) ── */
@@ -69,11 +47,12 @@
   width: 100%;
   min-height: 48px;
   max-height: 200px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   background: var(--x-memo-bg);
   color: var(--x-memo-text);
-  border: 1.5px solid var(--x-memo-border);
+  border: 1px solid var(--x-memo-border);
   border-radius: var(--x-memo-radius);
+  box-shadow: var(--x-memo-panel-shadow);
   box-sizing: border-box;
   font-family: var(--x-memo-font);
   font-size: 14px;
@@ -97,66 +76,10 @@
   border-color: var(--x-memo-focus);
 }
 
-/* ── Hover-card memo ── */
-
-.x-memo-card {
-  padding: 8px 16px;
-  box-sizing: border-box;
-}
-
-.x-memo-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  background: var(--x-memo-toggle-bg);
-  color: var(--x-memo-toggle-text);
-  border: 1px solid var(--x-memo-border-hover);
-  border-radius: var(--x-memo-radius);
-  cursor: pointer;
-  font-family: var(--x-memo-font);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.2;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.x-memo-toggle:hover {
-  background: var(--x-memo-toggle-hover);
-  color: var(--x-memo-focus);
-}
-
-.x-memo-toggle:focus-visible {
-  outline: 2px solid var(--x-memo-focus);
-  outline-offset: 2px;
-}
-
-.x-memo-toggle:active {
-  background: var(--x-memo-toggle-active);
-}
-
-.x-memo-toggle svg {
-  flex: 0 0 auto;
-}
-
-.x-memo-card-body {
-  max-height: 0;
-  padding: 0;
-  overflow: hidden;
-  transition: max-height 0.2s ease, padding 0.2s ease;
-}
-
-.x-memo-card-body.open {
-  max-height: 200px;
-  padding: 8px 0 0;
-}
-
 /* ── Reduced motion ── */
 
 @media (prefers-reduced-motion: reduce) {
-  .x-memo-textarea,
-  .x-memo-toggle,
-  .x-memo-card-body {
+  .x-memo-textarea {
     transition: none;
   }
 }
