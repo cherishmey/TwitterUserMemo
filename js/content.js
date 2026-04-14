@@ -362,7 +362,7 @@
     const textarea = document.createElement("textarea");
     textarea.className = "x-memo-textarea";
     textarea.rows = 1;
-    textarea.placeholder = "Write a note\u2026";
+    textarea.placeholder = "Add note";
     textarea.setAttribute("aria-label", ariaLabel);
 
     const saveDebounced = debounce(() => {
@@ -477,12 +477,12 @@
   }
 
   function findProfileInsertionTarget(profileRoot, screenName, userName, userDescription) {
-    if (userDescription) {
-      return userDescription.parentElement || userDescription;
+    if (userName) {
+      return userName;
     }
 
-    if (userName) {
-      return userName.parentElement || userName;
+    if (userDescription) {
+      return userDescription.parentElement || userDescription;
     }
 
     const bioFallback =
@@ -500,10 +500,10 @@
     }
 
     return (
-      safeClosest(profileLink, '[data-testid="UserProfileHeader_Items"]')?.parentElement ||
-      safeClosest(profileLink, '[data-testid="UserDescription"]')?.parentElement ||
       safeClosest(profileLink, '[data-testid="UserName"]') ||
       safeClosest(profileLink, '[data-testid="UserName"]')?.parentElement ||
+      safeClosest(profileLink, '[data-testid="UserProfileHeader_Items"]')?.parentElement ||
+      safeClosest(profileLink, '[data-testid="UserDescription"]')?.parentElement ||
       safeClosest(profileLink, "header") ||
       safeClosest(profileLink, "section") ||
       profileLink.parentElement ||
@@ -867,7 +867,7 @@
     container.className = "x-memo-card";
 
     const textarea = createMemoTextarea(screenName, "Hover card memo");
-    textarea.placeholder = "Add a private note";
+    textarea.placeholder = "Add note";
     populateMemo(textarea, screenName);
 
     container.appendChild(textarea);
