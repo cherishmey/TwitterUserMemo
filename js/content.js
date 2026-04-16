@@ -241,7 +241,7 @@
     }
 
     currentViewerScreenName = null;
-    hasResolvedViewerScreenName = true;
+    hasResolvedViewerScreenName = false;
     return null;
   }
 
