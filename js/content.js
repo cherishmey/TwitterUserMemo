@@ -665,6 +665,36 @@
     return null;
   }
 
+  function collectHoverCardProfileLinks(cardContent) {
+    const matches = [];
+
+    for (const link of safeQueryAll(cardContent, "a[href]")) {
+      const href = link.getAttribute("href") || "";
+      if (!/^\/[A-Za-z0-9_]{1,15}$/.test(href)) {
+        continue;
+      }
+
+      const handle = extractHandleFromHref(link.href);
+      if (!handle) {
+        continue;
+      }
+
+      const isHiddenLink =
+        link.getAttribute("aria-hidden") === "true" || link.getAttribute("tabindex") === "-1";
+      const insideAvatar = Boolean(
+        safeClosest(link, '[data-testid^="UserAvatar-Container"]') || safeClosest(link, ".r-1adg3ll")
+      );
+
+      if (isHiddenLink || insideAvatar) {
+        continue;
+      }
+
+      matches.push({ handle, link });
+    }
+
+    return matches;
+  }
+
   function findHoverCardRoot(rootNode) {
     if (!(rootNode instanceof Element)) {
       return null;
@@ -690,23 +720,13 @@
   }
 
   function findHoverCardInsertionTarget(cardContent) {
-    const profileLinks = safeQueryAll(cardContent, "a[href]");
-    for (const link of profileLinks) {
-      const href = link.getAttribute("href") || "";
-      if (!HOVER_CARD_LINK_PATH_PATTERN.test(href)) {
-        continue;
-      }
+    const profileLinks = collectHoverCardProfileLinks(cardContent);
+    const uniqueHandles = new Set(profileLinks.map(({ handle }) => handle));
+    if (uniqueHandles.size !== 1) {
+      return null;
+    }
 
-      const isHiddenLink =
-        link.getAttribute("aria-hidden") === "true" || link.getAttribute("tabindex") === "-1";
-      const insideAvatar = Boolean(
-        safeClosest(link, '[data-testid^="UserAvatar-Container"]') || safeClosest(link, ".r-1adg3ll")
-      );
-
-      if (isHiddenLink || insideAvatar) {
-        continue;
-      }
-
+    for (const { link } of profileLinks) {
       const handleBlock =
         safeClosest(link, ".r-knv0ih") ||
         safeClosest(link, ".r-1wbh5a2") ||
@@ -736,7 +756,7 @@
       return { mode: "after", target: lastCountBlock };
     }
 
-    return { mode: "append", target: cardContent };
+    return null;
   }
 
   function clearLegacyHoverMemo(cardContent) {
@@ -768,19 +788,20 @@
       return;
     }
 
-    const userName = safeQuery(hoverCardRoot, '[data-testid="UserName"]');
-    const screenName = (userName ? getHandleFromUserName(userName) : null) || getExactHandleFromLinks(hoverCardRoot);
-    if (!screenName) {
-      return;
-    }
-
-    if (screenName === getViewerScreenName()) {
-      return;
-    }
-
     const cardContent =
-      findHoverCardBody(hoverCardRoot) || findHoverCardContent(hoverCardRoot, userName || hoverCardRoot);
+      findHoverCardBody(hoverCardRoot) || findHoverCardContent(hoverCardRoot, hoverCardRoot);
     if (!cardContent || !isElementVisible(cardContent)) {
+      return;
+    }
+
+    const insertion = findHoverCardInsertionTarget(cardContent);
+    if (!insertion) {
+      return;
+    }
+
+    const uniqueHandles = new Set(collectHoverCardProfileLinks(cardContent).map(({ handle }) => handle));
+    const screenName = uniqueHandles.size === 1 ? Array.from(uniqueHandles)[0] : null;
+    if (!screenName || screenName === getViewerScreenName()) {
       return;
     }
 
@@ -827,7 +848,6 @@
     shadowRoot.appendChild(container);
 
     try {
-      const insertion = findHoverCardInsertionTarget(cardContent);
       let inserted = false;
 
       if (insertion.mode === "after" && insertion.target) {
@@ -835,13 +855,10 @@
       } else if (insertion.mode === "before" && insertion.target?.parentNode) {
         insertion.target.parentNode.insertBefore(host, insertion.target);
         inserted = true;
-      } else {
-        cardContent.appendChild(host);
-        inserted = true;
       }
 
       if (!inserted) {
-        cardContent.appendChild(host);
+        return;
       }
 
       markMemoTarget(cardContent, CARD_TARGET_MARK);
