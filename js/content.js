@@ -1,14 +1,18 @@
 (function () {
   "use strict";
 
+  const MEMO_TARGET_ATTRIBUTE = "data-xmemo";
   const PROFILE_TARGET_MARK = "profile-target";
   const CARD_TARGET_MARK = "card-target";
   const PROFILE_MEMO_SELECTOR = ".x-memo-profile";
   const CARD_MEMO_SELECTOR = ".x-memo-card-host";
+  const HANDLE_TEXT_PATTERN = /@([a-zA-Z0-9_]{1,15})/;
+  const PROFILE_LINK_PATH_PATTERN = /^\/[A-Za-z0-9_]{1,15}\/?$/;
+  const HOVER_CARD_LINK_PATH_PATTERN = /^\/[A-Za-z0-9_]{1,15}$/;
 
   let currentProfileScreenName = null;
   let currentViewerScreenName = null;
-  let currentViewerResolvedAt = 0;
+  let hasResolvedViewerScreenName = false;
   let profileObserver = null;
   let layersObserver = null;
   let layersWaitObserver = null;
@@ -40,44 +44,21 @@
     "articles"
   ]);
 
-  function extractScreenNameFromPath(pathname) {
+  function toScreenName(candidate) {
+    if (!candidate || RESERVED_PATHS.has(candidate.toLowerCase())) {
+      return null;
+    }
+
+    return `@${candidate}`;
+  }
+
+  function extractScreenNameFromPath(pathname, exact = false) {
     try {
-      const match = pathname.match(/^\/([a-zA-Z0-9_]{1,15})(?:\/|$)/);
-      if (!match) {
-        return null;
-      }
-
-      const candidate = match[1];
-      if (RESERVED_PATHS.has(candidate.toLowerCase())) {
-        return null;
-      }
-
-      return `@${candidate}`;
+      const pattern = exact ? /^\/([a-zA-Z0-9_]{1,15})\/?$/ : /^\/([a-zA-Z0-9_]{1,15})(?:\/|$)/;
+      return toScreenName(pathname.match(pattern)?.[1] || null);
     } catch {
       return null;
     }
-  }
-
-  function extractExactScreenNameFromPath(pathname) {
-    try {
-      const match = pathname.match(/^\/([a-zA-Z0-9_]{1,15})\/?$/);
-      if (!match) {
-        return null;
-      }
-
-      const candidate = match[1];
-      if (RESERVED_PATHS.has(candidate.toLowerCase())) {
-        return null;
-      }
-
-      return `@${candidate}`;
-    } catch {
-      return null;
-    }
-  }
-
-  function getScreenName() {
-    return extractScreenNameFromPath(window.location.pathname);
   }
 
   function getProfileRouteScreenName(pathname = window.location.pathname) {
@@ -87,13 +68,13 @@
         return null;
       }
 
-      const candidate = match[1];
+      const screenName = toScreenName(match[1]);
       const subpage = (match[2] || "").toLowerCase();
-      if (RESERVED_PATHS.has(candidate.toLowerCase()) || !PROFILE_SUBPAGES.has(subpage)) {
+      if (!screenName || !PROFILE_SUBPAGES.has(subpage)) {
         return null;
       }
 
-      return `@${candidate}`;
+      return screenName;
     } catch {
       return null;
     }
@@ -165,6 +146,40 @@
     }
   }
 
+  function findFirstElement(candidates) {
+    for (const candidate of candidates) {
+      if (candidate instanceof Element) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  function removeNode(node) {
+    try {
+      node?.remove?.();
+    } catch {}
+  }
+
+  function clearMemoMark(element) {
+    try {
+      element?.removeAttribute?.(MEMO_TARGET_ATTRIBUTE);
+    } catch {}
+  }
+
+  function hasMemoMark(element, mark) {
+    return element?.dataset?.xmemo === mark;
+  }
+
+  function markMemoTarget(element, mark) {
+    try {
+      if (element?.dataset) {
+        element.dataset.xmemo = mark;
+      }
+    } catch {}
+  }
+
   function isInsideAppChrome(element) {
     return Boolean(
       safeClosest(element, "header") ||
@@ -179,9 +194,13 @@
     );
   }
 
+  function resetViewerScreenNameCache() {
+    currentViewerScreenName = null;
+    hasResolvedViewerScreenName = false;
+  }
+
   function getViewerScreenName(forceRefresh = false) {
-    const now = Date.now();
-    if (!forceRefresh && currentViewerResolvedAt && now - currentViewerResolvedAt < 5000) {
+    if (!forceRefresh && hasResolvedViewerScreenName) {
       return currentViewerScreenName;
     }
 
@@ -211,18 +230,18 @@
           matchesSelector(link, '[data-testid="AppTabBar_Profile_Link"]') ||
           text.includes("profile") ||
           text.includes("account") ||
-          /^\/[A-Za-z0-9_]{1,15}\/?$/.test(href);
+          PROFILE_LINK_PATH_PATTERN.test(href);
 
         if (looksLikeProfileChromeLink) {
           currentViewerScreenName = handle;
-          currentViewerResolvedAt = now;
+          hasResolvedViewerScreenName = true;
           return currentViewerScreenName;
         }
       }
     }
 
     currentViewerScreenName = null;
-    currentViewerResolvedAt = now;
+    hasResolvedViewerScreenName = false;
     return null;
   }
 
@@ -262,10 +281,10 @@
     } catch {}
   }
 
-  function extractHandleFromHref(href) {
+  function extractHandleFromHref(href, exact = false) {
     try {
       const url = new URL(href, window.location.origin);
-      return extractScreenNameFromPath(url.pathname);
+      return extractScreenNameFromPath(url.pathname, exact);
     } catch {
       return null;
     }
@@ -282,13 +301,11 @@
 
     try {
       const text = userNameElement?.textContent || "";
-      const match = text.match(/@([a-zA-Z0-9_]{1,15})/);
+      const match = text.match(HANDLE_TEXT_PATTERN);
       return match ? `@${match[1]}` : null;
     } catch {
       return null;
     }
-
-    return null;
   }
 
   function isDarkTheme() {
@@ -345,16 +362,12 @@
   function clearProfileMemo() {
     const memos = safeQueryAll(document, PROFILE_MEMO_SELECTOR);
     for (const memo of memos) {
-      try {
-        memo.remove();
-      } catch {}
+      removeNode(memo);
     }
 
-    const markedTargets = safeQueryAll(document, `[data-xmemo="${PROFILE_TARGET_MARK}"]`);
+    const markedTargets = safeQueryAll(document, `[${MEMO_TARGET_ATTRIBUTE}="${PROFILE_TARGET_MARK}"]`);
     for (const target of markedTargets) {
-      try {
-        target.removeAttribute("data-xmemo");
-      } catch {}
+      clearMemoMark(target);
     }
   }
 
@@ -396,11 +409,7 @@
     if (userDescription) {
       for (const node of userNames) {
         const handle = getHandleFromUserName(node);
-        let insideArticle = false;
-
-        try {
-          insideArticle = Boolean(node.closest("article"));
-        } catch {}
+        const insideArticle = Boolean(safeClosest(node, "article"));
 
         if (!handle || insideArticle) {
           continue;
@@ -418,11 +427,7 @@
 
     for (const node of userNames) {
       const handle = getHandleFromUserName(node);
-      let insideArticle = false;
-
-      try {
-        insideArticle = Boolean(node.closest("article"));
-      } catch {}
+      const insideArticle = Boolean(safeClosest(node, "article"));
 
       if (handle && !insideArticle) {
         return node;
@@ -445,28 +450,13 @@
     const links = safeQueryAll(root, "a[href]");
 
     for (const link of links) {
-      const handle = (() => {
-        try {
-          const url = new URL(link.href, window.location.origin);
-          return extractExactScreenNameFromPath(url.pathname);
-        } catch {
-          return null;
-        }
-      })();
+      const handle = extractHandleFromHref(link.href, true);
       if (handle !== screenName) {
         continue;
       }
 
-      let insideArticle = false;
-      let insideLayers = false;
-
-      try {
-        insideArticle = Boolean(link.closest("article"));
-      } catch {}
-
-      try {
-        insideLayers = Boolean(link.closest("#layers"));
-      } catch {}
+      const insideArticle = Boolean(safeClosest(link, "article"));
+      const insideLayers = Boolean(safeClosest(link, "#layers"));
 
       if (!insideArticle && !insideLayers) {
         return link;
@@ -499,9 +489,10 @@
       return profileRoot.firstElementChild || profileRoot;
     }
 
+    const userNameContainer = safeClosest(profileLink, '[data-testid="UserName"]');
     return (
-      safeClosest(profileLink, '[data-testid="UserName"]') ||
-      safeClosest(profileLink, '[data-testid="UserName"]')?.parentElement ||
+      userNameContainer?.parentElement ||
+      userNameContainer ||
       safeClosest(profileLink, '[data-testid="UserProfileHeader_Items"]')?.parentElement ||
       safeClosest(profileLink, '[data-testid="UserDescription"]')?.parentElement ||
       safeClosest(profileLink, "header") ||
@@ -588,13 +579,11 @@
       return;
     }
 
-    if (insertionTarget.dataset.xmemo && !existingMemo) {
-      try {
-        insertionTarget.removeAttribute("data-xmemo");
-      } catch {}
+    if (!existingMemo && hasMemoMark(insertionTarget, PROFILE_TARGET_MARK)) {
+      clearMemoMark(insertionTarget);
     }
 
-    if (insertionTarget.dataset.xmemo) {
+    if (hasMemoMark(insertionTarget, PROFILE_TARGET_MARK)) {
       return;
     }
 
@@ -611,7 +600,7 @@
       return;
     }
 
-    insertionTarget.dataset.xmemo = PROFILE_TARGET_MARK;
+    markMemoTarget(insertionTarget, PROFILE_TARGET_MARK);
     currentProfileScreenName = screenName;
     populateMemo(textarea, screenName, () => currentProfileScreenName !== screenName);
   }
@@ -623,9 +612,7 @@
         text: "#e7e9ea",
         placeholder: "#6e767d",
         border: "#2f3336",
-        label: "#71767b",
         focus: "#1d9bf0",
-        panelBorder: "rgba(255, 255, 255, 0.08)",
         panelShadow: "none"
       };
     }
@@ -635,34 +622,20 @@
       text: "#0f1419",
       placeholder: "#a0aab4",
       border: "#eff3f4",
-      label: "#536471",
       focus: "#1d9bf0",
-      panelBorder: "rgba(15, 20, 25, 0.08)",
       panelShadow: "0 1px 2px rgba(15, 20, 25, 0.04)"
     };
   }
 
   function createHoverCardShadowStyles() {
     const theme = getMemoThemeTokens();
-    return (
-      ":host { all: initial; display: block; width: 100%; box-sizing: border-box; }\n" +
-      ".x-memo-card { display: flex; flex-direction: column; align-items: stretch; width: 100%; margin-top: 8px; padding: 4px 0 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }\n" +
-      ".x-memo-textarea { width: 100%; min-height: 36px; height: 36px; max-height: 36px; padding: 7px 10px; background: " +
-      theme.bg +
-      "; color: " +
-      theme.text +
-      "; border: 1px solid " +
-      theme.border +
-      "; border-radius: 4px; box-shadow: " +
-      theme.panelShadow +
-      "; box-sizing: border-box; font: inherit; font-size: 13px; line-height: 20px; resize: none; outline: none; overflow: hidden; }\n" +
-      ".x-memo-textarea::placeholder { color: " +
-      theme.placeholder +
-      "; }\n" +
-      ".x-memo-textarea:focus { border-color: " +
-      theme.focus +
-      "; }\n"
-    );
+    return [
+      ":host { all: initial; display: block; width: 100%; box-sizing: border-box; }",
+      ".x-memo-card { display: flex; flex-direction: column; align-items: stretch; width: 100%; margin-top: 8px; padding: 4px 0 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }",
+      `.x-memo-textarea { width: 100%; min-height: 36px; height: 36px; max-height: 36px; padding: 7px 10px; background: ${theme.bg}; color: ${theme.text}; border: 1px solid ${theme.border}; border-radius: 4px; box-shadow: ${theme.panelShadow}; box-sizing: border-box; font: inherit; font-size: 13px; line-height: 20px; resize: none; outline: none; overflow: hidden; }`,
+      `.x-memo-textarea::placeholder { color: ${theme.placeholder}; }`,
+      `.x-memo-textarea:focus { border-color: ${theme.focus}; }`
+    ].join("\n");
   }
 
   function findHoverCardContent(rootNode, userName) {
@@ -676,26 +649,17 @@
       rootNode
     ];
 
-    for (const candidate of candidates) {
-      if (candidate && candidate.nodeType === Node.ELEMENT_NODE) {
-        return candidate;
-      }
-    }
-
-    return null;
+    return findFirstElement(candidates);
   }
 
   function getExactHandleFromLinks(rootNode) {
     const links = safeQueryAll(rootNode, "a[href]");
 
     for (const link of links) {
-      try {
-        const url = new URL(link.href, window.location.origin);
-        const handle = extractExactScreenNameFromPath(url.pathname);
-        if (handle) {
-          return handle;
-        }
-      } catch {}
+      const handle = extractHandleFromHref(link.href, true);
+      if (handle) {
+        return handle;
+      }
     }
 
     return null;
@@ -752,13 +716,7 @@
       cardContent
     ];
 
-    for (const candidate of candidates) {
-      if (candidate && candidate.nodeType === Node.ELEMENT_NODE) {
-        return candidate;
-      }
-    }
-
-    return null;
+    return findFirstElement(candidates);
   }
 
   function findHoverCardInsertionTarget(cardContent) {
@@ -793,10 +751,8 @@
     );
 
     if (countLinks.length > 0) {
-      let lastCountBlock = countLinks[countLinks.length - 1];
-      try {
-        lastCountBlock = safeClosest(lastCountBlock, "div") || lastCountBlock;
-      } catch {}
+      const lastCountLink = countLinks[countLinks.length - 1];
+      const lastCountBlock = safeClosest(lastCountLink, "div") || lastCountLink;
       return { mode: "after", target: lastCountBlock };
     }
 
@@ -806,11 +762,9 @@
   function clearLegacyHoverMemo(cardContent) {
     const legacyNodes = safeQueryAll(cardContent, ".x-memo-card");
     for (const node of legacyNodes) {
-      try {
-        if (!safeClosest(node, ".x-memo-card-host")) {
-          node.remove();
-        }
-      } catch {}
+      if (!safeClosest(node, ".x-memo-card-host")) {
+        removeNode(node);
+      }
     }
 
     const legacyHosts = safeQueryAll(cardContent, ".x-memo-card-host");
@@ -818,7 +772,7 @@
       try {
         const hasButton = Boolean(host.shadowRoot?.querySelector("button"));
         if (hasButton) {
-          host.remove();
+          removeNode(host);
         }
       } catch {}
     }
@@ -857,13 +811,11 @@
       return;
     }
 
-    if (cardContent.dataset.xmemo && !safeQuery(cardContent, CARD_MEMO_SELECTOR)) {
-      try {
-        cardContent.removeAttribute("data-xmemo");
-      } catch {}
+    if (!safeQuery(cardContent, CARD_MEMO_SELECTOR) && hasMemoMark(cardContent, CARD_TARGET_MARK)) {
+      clearMemoMark(cardContent);
     }
 
-    if (cardContent.dataset.xmemo) {
+    if (hasMemoMark(cardContent, CARD_TARGET_MARK)) {
       return;
     }
 
@@ -909,7 +861,7 @@
         return;
       }
 
-      cardContent.dataset.xmemo = CARD_TARGET_MARK;
+      markMemoTarget(cardContent, CARD_TARGET_MARK);
     } catch {}
   }
 
@@ -935,17 +887,38 @@
     }
   }
 
-  const scheduleProfileRender = debounce(renderProfileMemo, 80);
-  const scheduleHoverScan = debounce(() => {
-    const layers = safeQuery(document, "div#layers");
-    if (layers) {
-      scanHoverCards(layers);
+  function collectHoverCardScanRoots(mutations) {
+    const roots = new Set();
+
+    for (const mutation of mutations) {
+      let addedElementCount = 0;
+
+      for (const node of mutation.addedNodes) {
+        if (node instanceof Element) {
+          roots.add(node);
+          addedElementCount += 1;
+        }
+      }
+
+      if (addedElementCount === 0 && mutation.target instanceof Element) {
+        roots.add(mutation.target);
+      }
     }
-  }, 60);
+
+    return roots;
+  }
+
+  const scheduleProfileRender = debounce(() => {
+    if (!getProfileRouteScreenName() && !currentProfileScreenName) {
+      return;
+    }
+
+    renderProfileMemo();
+  }, 80);
 
   function handleLocationChange() {
     currentProfileScreenName = null;
-    currentViewerResolvedAt = 0;
+    resetViewerScreenNameCache();
     clearProfileMemo();
     syncThemeClass();
     scheduleProfileRender();
@@ -975,7 +948,10 @@
     }
 
     profileObserver = new MutationObserver(() => {
-      syncThemeClass();
+      if (!getProfileRouteScreenName() && !currentProfileScreenName) {
+        return;
+      }
+
       scheduleProfileRender();
     });
 
@@ -996,18 +972,10 @@
     }
 
     layersObserver = new MutationObserver((mutations) => {
-      syncThemeClass();
-      for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
-          scanHoverCards(node);
-        }
-
-        if (mutation.target instanceof Element) {
-          scanHoverCards(mutation.target);
-        }
+      const roots = collectHoverCardScanRoots(mutations);
+      for (const root of roots) {
+        scanHoverCards(root);
       }
-
-      scheduleHoverScan();
     });
 
     layersObserver.observe(layers, { childList: true, subtree: true });
